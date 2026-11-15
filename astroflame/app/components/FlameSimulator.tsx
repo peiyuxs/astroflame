@@ -260,7 +260,6 @@ export default function FlameSimulator() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenError, setFullscreenError] = useState<string | null>(null);
   const simulatorRef = useRef<HTMLDivElement>(null);
-  const hasAutoCollapsedControls = useRef(false);
   const opposedFsrCmS = estimateOpposedFsrCmS(settings);
   const directionalRates = getDirectionalRates(
     opposedFsrCmS,
@@ -305,26 +304,6 @@ export default function FlameSimulator() {
     document.addEventListener("fullscreenchange", updateFullscreenState);
     return () =>
       document.removeEventListener("fullscreenchange", updateFullscreenState);
-  }, []);
-
-  useEffect(() => {
-    const simulator = simulatorRef.current;
-    if (!simulator || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          entry.intersectionRatio >= 0.5 &&
-          !hasAutoCollapsedControls.current
-        ) {
-          hasAutoCollapsedControls.current = true;
-          setSettingsOpen(false);
-        }
-      },
-      { threshold: [0.5] },
-    );
-    observer.observe(simulator);
-    return () => observer.disconnect();
   }, []);
 
   function updateSetting<Key extends keyof SimulationSettings>(
@@ -393,15 +372,6 @@ export default function FlameSimulator() {
         </div>
         <div className="simulation-actions">
           <button
-            aria-controls="simulation-settings"
-            aria-expanded={settingsOpen}
-            className="simulation-toolbar-button"
-            onClick={() => setSettingsOpen((open) => !open)}
-            type="button"
-          >
-            {settingsOpen ? "Hide controls" : "Test controls"}
-          </button>
-          <button
             className="simulation-run-button"
             disabled={simulation.status === "running"}
             onClick={run}
@@ -465,21 +435,15 @@ export default function FlameSimulator() {
         <aside
           aria-label="Simulation settings"
           className="simulation-settings-panel"
-          aria-hidden={!settingsOpen}
-          inert={!settingsOpen}
           id="simulation-settings"
         >
-          <div className="settings-panel-inner">
+          <div
+            aria-hidden={!settingsOpen}
+            className="settings-panel-inner"
+            inert={!settingsOpen}
+          >
             <div className="settings-panel-heading">
               <h3>Test controls</h3>
-              <button
-                aria-label="Collapse test controls"
-                className="settings-panel-toggle"
-                onClick={() => setSettingsOpen(false)}
-                type="button"
-              >
-                ‹
-              </button>
             </div>
             <div className="settings-panel-content">
             <label className="material-select" htmlFor="simulation-scenario">
@@ -612,7 +576,7 @@ export default function FlameSimulator() {
                   </span>
                 </label>
                 <div className="material-evidence">
-                  <strong>3 cm rib height · 1 cm base thickness</strong>
+                  <strong>0.3 cm rib height · 1 cm base thickness</strong>
                   <span>40 × 20 cm specimen · 800 cm² planform</span>
                   <span>26.9% oxygen · 76.1 kPa reported pressure</span>
                   <span>
@@ -659,45 +623,6 @@ export default function FlameSimulator() {
               </small>
             </label>
 
-            <fieldset className="ignition-controls">
-              <legend>Ignition point</legend>
-              <p>Click a cell on the map or adjust the coordinates.</p>
-              <label htmlFor="ignition-column">
-                Column {ignitionPoint.x + 1}
-                <input
-                  disabled={simulation.status === "running"}
-                  id="ignition-column"
-                  max={GRID_COLUMNS}
-                  min="1"
-                  onChange={(event) =>
-                    chooseIgnitionPoint({
-                      ...ignitionPoint,
-                      x: event.currentTarget.valueAsNumber - 1,
-                    })
-                  }
-                  type="range"
-                  value={ignitionPoint.x + 1}
-                />
-              </label>
-              <label htmlFor="ignition-row">
-                Row {ignitionPoint.y + 1}
-                <input
-                  disabled={simulation.status === "running"}
-                  id="ignition-row"
-                  max={geometry.gridRows}
-                  min="1"
-                  onChange={(event) =>
-                    chooseIgnitionPoint({
-                      ...ignitionPoint,
-                      y: event.currentTarget.valueAsNumber - 1,
-                    })
-                  }
-                  type="range"
-                  value={ignitionPoint.y + 1}
-                />
-              </label>
-            </fieldset>
-
             <div className="reference-conditions">
               <strong>Experiment metadata</strong>
               {settings.scenario === "bass" ? (
@@ -719,7 +644,7 @@ export default function FlameSimulator() {
                 <>
                   <span>Material / flow: structured ribbed PMMA / opposed flow</span>
                   <span>Surface geometry: 40 × 20 cm · thickness 1 cm</span>
-                  <span>Rib height 3 cm · width {settings.ribWidthCm.toFixed(1)} cm</span>
+                  <span>Rib height 0.3 cm · width {settings.ribWidthCm.toFixed(1)} cm</span>
                   <span>Pressure 76.1 kPa · oxygen 26.9%</span>
                   <span>Planform: 800 cm² · airflow {settings.airflowCmS} cm/s</span>
                 </>
@@ -765,19 +690,21 @@ export default function FlameSimulator() {
             </details>
             </div>
           </div>
-        </aside>
-        {!settingsOpen && (
           <button
             aria-controls="simulation-settings"
-            aria-expanded={false}
-            aria-label="Show test controls"
-            className="settings-peek-button"
-            onClick={() => setSettingsOpen(true)}
+            aria-expanded={settingsOpen}
+            aria-label={
+              settingsOpen
+                ? "Collapse simulation sidebar"
+                : "Expand simulation sidebar"
+            }
+            className="settings-panel-toggle"
+            onClick={() => setSettingsOpen((open) => !open)}
             type="button"
           >
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true">{settingsOpen ? "‹" : "›"}</span>
           </button>
-        )}
+        </aside>
 
         <section aria-label="Simulation display" className="simulation-stage">
           <div className="simulation-stage-heading">
@@ -829,7 +756,12 @@ export default function FlameSimulator() {
             <div className="map-view">
               <div className="map-title-row">
                 <h3>Fuel surface · {geometry.lengthCm} × {geometry.widthCm} cm</h3>
-                <p>Airflow → right; opposed spread ← left</p>
+                <p className="directional-spread-label">
+                  <strong className="airflow-direction">Airflow →</strong>
+                  <span className="flame-spread-direction">
+                    Flame Spread ←
+                  </span>
+                </p>
               </div>
               <FireMap
                 cells={simulation.cells}
@@ -838,11 +770,6 @@ export default function FlameSimulator() {
                 onSelectIgnition={chooseIgnitionPoint}
                 selectable={simulation.status !== "running"}
               />
-              <div className="fire-legend" aria-label="Flame map legend">
-                <span><i className="legend-burned" /> Burned</span>
-                <span><i className="legend-unburned" /> Unburned</span>
-                <span><i className="legend-burning" /> Active front</span>
-              </div>
             </div>
             <div className="chart-view">
               <div className="map-title-row">
