@@ -21,6 +21,8 @@
 		"@vitejs/plugin-react": "latest",
 		"@vitejs/plugin-rsc": "latest",
 		"cf": "^1.0.0-beta.32",
+		"csv-parse": "^7.0.3",
+		"dotenv": "^18.0.10",
 		"tailwindcss": "latest",
 		"typescript": "latest",
 		"vite": "8.3.0"
@@ -32,6 +34,10 @@
 		"start": "vite preview",
 		"deploy": "vinext-cloudflare deploy",
 		"preview": "npm run build && npm run start --",
-		"cf-typegen": "cf workers types"
+		"cf-typegen": "cf workers types",
+		"db:migrate": "node scripts/migrate-db.mjs",
+		"data:preview": "node scripts/import-nasa-data.mjs --dry-run",
+		"data:import": "node scripts/import-nasa-data.mjs",
+		"test:import": "node --test scripts/import-nasa-data.test.mjs"
 	}
 }
