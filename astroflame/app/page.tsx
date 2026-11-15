@@ -62,29 +62,9 @@ function HeroSky() {
   );
 }
 
-const sections = [
-  { href: "#about", label: "About" },
-  { href: "#simulation", label: "Simulation" },
-  { href: "#analysis", label: "Analysis" },
-];
-
 export default function Page() {
   return (
-    <>
-      <header className="site-header">
-        <a aria-label="AstroFlame home" className="brand-link" href="#home">
-          <img alt="" className="nav-wordmark" src="/nav-wordmark.png" />
-        </a>
-        <nav aria-label="Main navigation" className="site-nav">
-          {sections.map((section) => (
-            <a href={section.href} key={section.href}>
-              {section.label}
-            </a>
-          ))}
-        </nav>
-      </header>
-
-      <main>
+    <main>
         <div className="hero-about-background">
           <section
             aria-labelledby="home-title"
@@ -112,13 +92,45 @@ export default function Page() {
             className="page-section project-section"
             id="about"
           >
-            <div className="section-content">
+            <div className="section-content about-layout">
               <h2 id="about-title">About the project</h2>
-              <p className="section-lead">
-                AstroFlame makes NASA spacecraft-fire research from the BASS
-                experiments and SAFFIRE-III telemetry available through a
-                read-only data API.
-              </p>
+              <div className="about-copy">
+                <p className="section-lead">
+                  AstroFlame Study Simulator is an interactive website that
+                  helps people explore how fire behaves in microgravity. It has
+                  been created for the NASA Space Apps Challenge to make NASA’s
+                  fire research easier to understand. Fire behaves differently
+                  in space, so understanding how oxygen and airflow affect
+                  flames is important for protecting astronauts. However, the
+                  research can be difficult to follow when it is spread across
+                  technical papers and datasets.
+                </p>
+                <p className="section-lead">
+                  The project brings this research into a visual experience
+                  that users can explore for themselves. Users can choose a
+                  material, change oxygen and airflow settings, and select
+                  where ignition begins. A colored map shows the estimated
+                  spread of the fire, while a graph shows how the modeled flame
+                  front moves over time. NASA’s research has been used to
+                  inform these estimates and show the sources and assumptions
+                  behind them. The website combines an interactive interface
+                  with data processing to turn complex information into
+                  something easier to explore. AstroFlame is designed for
+                  students, researchers, and anyone curious about fire in
+                  space, with estimates meant for learning rather than real
+                  world safety decisions.
+                </p>
+              </div>
+              <div className="about-images">
+                <img
+                  alt="Bright flame during a combustion experiment."
+                  src="/about-flame.png"
+                />
+                <img
+                  alt="Close-up of a material sample in an experimental fixture."
+                  src="/about-material-sample.png"
+                />
+              </div>
             </div>
           </section>
         </div>
@@ -142,47 +154,10 @@ export default function Page() {
         <div aria-hidden="true" className="analysis-transition" />
 
         <section
-          aria-labelledby="analysis-title"
+          aria-label="Analysis"
           className="page-section analysis-section"
           id="analysis"
-        >
-          <div className="section-content">
-            <h2 id="analysis-title">Analysis</h2>
-            <p className="section-lead">
-              Explore BASS model estimates and available SAFFIRE-III telemetry.
-              SAFFIRE readings appear here when imported into TigerData.
-            </p>
-            <SaffireTimeSeries />
-            <p>
-              <a className="text-link" href="/api/investigations">
-                Investigation list
-              </a>
-            </p>
-            <p>
-              <a
-                className="text-link"
-                href="/api/investigations/PSI-26/experiments"
-              >
-                PSI-26 BASS experiments
-              </a>
-            </p>
-            <p>
-              <a
-                className="text-link"
-                href="/api/investigations/PSI-100/measurements"
-              >
-                PSI-100 SAFFIRE-III measurements
-              </a>
-            </p>
-          </div>
-        </section>
-      </main>
-
-      <footer className="site-footer">
-        <a href="#home">AstroFlame</a>
-        <p>NASA Space Apps 2026</p>
-        <a href="#home">Back to top</a>
-      </footer>
-    </>
+        />
+    </main>
   );
 }
