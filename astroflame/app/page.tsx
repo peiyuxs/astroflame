@@ -8,7 +8,7 @@ export default function Page() {
   return (
     <>
       <header className="site-header">
-        <a aria-label="Astroflame home" className="brand-link" href="#home">
+        <a aria-label="AstroFlame home" className="brand-link" href="#home">
           <img alt="" className="nav-wordmark" src="/nav-wordmark.png" />
         </a>
         <nav aria-label="Main navigation" className="site-nav">
@@ -29,7 +29,7 @@ export default function Page() {
           >
             <div className="hero-content">
               <h1
-                aria-label="Astroflame Study Simulator"
+                aria-label="AstroFlame Study Simulator"
                 className="hero-wordmark-heading"
                 id="home-title"
               >
@@ -50,7 +50,7 @@ export default function Page() {
             <div className="section-content">
               <h2 id="about-title">About the project</h2>
               <p className="section-lead">
-                Astroflame makes NASA spacecraft-fire research from the BASS
+                AstroFlame makes NASA spacecraft-fire research from the BASS
                 experiments and SAFFIRE-III telemetry available through a
                 read-only data API.
               </p>
@@ -111,7 +111,7 @@ export default function Page() {
       </main>
 
       <footer className="site-footer">
-        <a href="#home">Astroflame</a>
+        <a href="#home">AstroFlame</a>
         <p>NASA Space Apps 2026</p>
         <a href="#home">Back to top</a>
       </footer>
