@@ -45,6 +45,10 @@ fixed at 0.30 cm. The fit was measured over oxygen 17.9–22.2% and airflow
 improve grouped validation; airflow remains an exploratory control because
 the simulator is intended to show its potential influence.
 
+Ignition location changes the sample geometry and the distance-to-edge
+estimate. The prototype spreads symmetrically from the selected cell; it does
+not yet model directional airflow or material-specific flame behavior.
+
 The SIBAL profile uses five supplied spread-rate observations as a reference
 and transfers the PMMA fit's relative oxygen/airflow response. Nomex and
 Ultem use clearly marked temporary PMMA-relative multipliers. These are
@@ -59,11 +63,6 @@ readings are unavailable. The SAFFIRE-III time-series chart reads up to 500
 recent measurements for a chosen sensor channel from TigerData through the
 `/api/investigations/PSI-100/timeseries` endpoint. If no measurements have
 been imported, the chart explains that instead of displaying invented data.
-
-The SAFFIRE-III time-series chart reads up to 500 recent measurements for a
-chosen sensor channel from TigerData through the `/api/investigations/PSI-100/timeseries`
-endpoint. If the database has no imported SAFFIRE measurements, the chart
-explains that instead of displaying invented or simulated readings.
 
 ## How it works
 
