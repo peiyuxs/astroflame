@@ -1,5 +1,5 @@
 import FlameSimulator from "@/app/components/FlameSimulator";
-import SaffireTimeSeries from "@/app/components/SaffireTimeSeries";
+import BassComparison from "@/app/components/BassComparison";
 
 function HeroSky() {
   let seed = 2026;
@@ -157,7 +157,9 @@ export default function Page() {
           aria-label="Analysis"
           className="page-section analysis-section"
           id="analysis"
-        />
+        >
+          <BassComparison />
+        </section>
     </main>
   );
 }

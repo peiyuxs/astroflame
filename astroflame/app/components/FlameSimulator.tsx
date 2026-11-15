@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BASS_INPUT_RANGES } from "@/lib/bass-model";
+import SimulationInsights from "@/app/components/SimulationInsights";
 import {
   advanceSimulation,
   CONCURRENT_MULTIPLIER_RANGE,
@@ -24,6 +25,10 @@ import {
   startSimulation,
   VISUALIZATION_ACCELERATION,
 } from "@/lib/flame-simulation";
+import {
+  parseSimulationInsight,
+  type SimulationInsight,
+} from "@/lib/simulation-insights";
 
 const CELL_PIXELS = 10;
 
@@ -256,6 +261,11 @@ export default function FlameSimulator() {
   const [simulation, setSimulation] = useState(() =>
     createInitialSimulation(settings),
   );
+  const [insightStatus, setInsightStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const [insight, setInsight] = useState<SimulationInsight | null>(null);
+  const [insightError, setInsightError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenError, setFullscreenError] = useState<string | null>(null);
@@ -281,7 +291,7 @@ export default function FlameSimulator() {
     simulation.history.at(-1)?.areaGrowthCm2S ?? 0;
   const averageGrowth = getAverageAreaGrowthCm2S(simulation);
   const ribWidthRange =
-    settings.scenario === "saffire-5"
+    settings.scenario === "saffire-v"
       ? getSaffireRibWidthRange(settings.airflowCmS)
       : null;
 
@@ -298,6 +308,83 @@ export default function FlameSimulator() {
   }, [settings, simulation.status, simulation.timeStepSeconds]);
 
   useEffect(() => {
+    if (
+      simulation.status !== "burned" &&
+      simulation.status !== "extinguished"
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setInsightStatus("loading");
+    setInsight(null);
+    setInsightError(null);
+
+    async function generateInsights() {
+      try {
+        const response = await fetch("/api/simulation/insights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            settings,
+            ignitionPoint,
+            result: {
+              status: simulation.status,
+              modelTimeSeconds: simulation.simulatedSeconds,
+              burnedAreaCm2,
+              instantaneousGrowthCm2S: instantaneousGrowth,
+              averageGrowthCm2S: averageGrowth,
+            },
+          }),
+          signal: controller.signal,
+        });
+
+        let payload: unknown;
+        try {
+          payload = await response.json();
+        } catch {
+          throw new Error("Gemini returned an unreadable response.");
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            getInsightsApiError(payload) ??
+              `Gemini learning notes could not be generated (${response.status}).`,
+          );
+        }
+
+        const parsedInsight =
+          isRecord(payload) ? parseSimulationInsight(payload.insight) : null;
+        if (!parsedInsight) {
+          throw new Error("Gemini returned notes in an unexpected format.");
+        }
+
+        setInsight(parsedInsight);
+        setInsightStatus("ready");
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setInsightError(
+          error instanceof Error
+            ? error.message
+            : "Gemini learning notes could not be generated.",
+        );
+        setInsightStatus("error");
+      }
+    }
+
+    void generateInsights();
+    return () => controller.abort();
+  }, [
+    averageGrowth,
+    burnedAreaCm2,
+    ignitionPoint,
+    instantaneousGrowth,
+    settings,
+    simulation.simulatedSeconds,
+    simulation.status,
+  ]);
+
+  useEffect(() => {
     function updateFullscreenState() {
       setIsFullscreen(document.fullscreenElement === simulatorRef.current);
     }
@@ -310,11 +397,13 @@ export default function FlameSimulator() {
     key: Key,
     value: SimulationSettings[Key],
   ) {
+    clearSimulationInsights();
     setSettings((current) => ({ ...current, [key]: value }));
     setSimulation(createInitialSimulation(settings));
   }
 
   function changeScenario(scenario: ScenarioId) {
+    clearSimulationInsights();
     const scenarioSettings = {
       ...settings,
       scenario,
@@ -329,11 +418,19 @@ export default function FlameSimulator() {
   }
 
   function run() {
+    clearSimulationInsights();
     setSimulation(startSimulation(settings, ignitionPoint));
   }
 
   function reset() {
+    clearSimulationInsights();
     setSimulation(createInitialSimulation(settings));
+  }
+
+  function clearSimulationInsights() {
+    setInsightStatus("idle");
+    setInsight(null);
+    setInsightError(null);
   }
 
   function chooseIgnitionPoint(point: IgnitionPoint) {
@@ -453,15 +550,15 @@ export default function FlameSimulator() {
                 id="simulation-scenario"
                 onChange={(event) =>
                   changeScenario(
-                    event.currentTarget.value === "saffire-5"
-                      ? "saffire-5"
+                    event.currentTarget.value === "saffire-v"
+                      ? "saffire-v"
                       : "bass",
                   )
                 }
                 value={settings.scenario}
               >
                 <option value="bass">BASS — smooth PMMA</option>
-                <option value="saffire-5">SAFFIRE-5 — ribbed PMMA</option>
+                <option value="saffire-v">SAFFIRE-V — ribbed PMMA</option>
               </select>
             </label>
 
@@ -662,7 +759,7 @@ export default function FlameSimulator() {
               </p>
               <p>
                 BASS airflow and thickness slider bounds are 2–21 cm/s and
-                0.1–0.5 cm; oxygen is 17.9–22.2%. SAFFIRE-5 uses only 5 or
+                0.1–0.5 cm; oxygen is 17.9–22.2%. SAFFIRE-V uses only 5 or
                 20 cm/s, 0.1–1.0 cm ribs where observed, fixed 1 cm thickness,
                 and fixed 26.9% oxygen. Its digitized observations represent
                 one experiment and are not independent validation.
@@ -785,12 +882,27 @@ export default function FlameSimulator() {
               )}
             </div>
           </div>
-          <p className="simulation-acceleration-note">
-            Animation runs at {VISUALIZATION_ACCELERATION}×; all reported times
-            and growth rates use simulated seconds.
-          </p>
+          <SimulationInsights
+            error={insightError}
+            insight={insight}
+            status={insightStatus}
+          />
         </section>
       </div>
     </div>
   );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getInsightsApiError(value: unknown): string | null {
+  if (
+    isRecord(value) &&
+    typeof value.error === "string"
+  ) {
+    return value.error;
+  }
+  return null;
 }
