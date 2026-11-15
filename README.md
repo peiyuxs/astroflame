@@ -515,3 +515,10 @@ nasaspaceapps26/
     ├── vite.config.ts                # Vite/vinext app configuration
     └── package.json                  # Dependencies and commands
 ```
+
+## References
+
+- NASA Physical Sciences Informatics. [PSI-26: Burning and Suppression of Solids (BASS)](https://psi.nasa.gov/physci/repo/data/investigations/PSI-26).
+- NASA TechPort. [SAFFIRE-V: Spacecraft Fire Safety Demonstration (Saffire)](https://techport.nasa.gov/projects/13543).
+- Olson & Ferkul. [NASA Glenn Research Center BASS-II / POIWG](https://ntrs.nasa.gov/api/citations/20140011099/downloads/20140011099.pdf).
+- [Microgravity Flame Spread in Exploration Atmospheres: Pressure, Oxygen, and Velocity Effects on Opposed and Concurrent Flame Spread](https://www.researchgate.net/publication/255013038_Microgravity_Flame_Spread_in_Exploration_Atmospheres_Pressure_Oxygen_and_Velocity_Effects_on_Opposed_and_Concurrent_Flame_Spread).
