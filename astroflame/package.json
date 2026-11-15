@@ -38,6 +38,7 @@
 		"db:migrate": "node scripts/migrate-db.mjs",
 		"data:preview": "node scripts/import-nasa-data.mjs --dry-run",
 		"data:import": "node scripts/import-nasa-data.mjs",
-		"test:import": "node --test scripts/import-nasa-data.test.mjs"
+		"test:import": "node --test scripts/import-nasa-data.test.mjs",
+		"test:model": "node --experimental-strip-types --test lib/bass-model.test.mjs lib/flame-simulation.test.mjs"
 	}
 }
