@@ -1,4 +1,10 @@
+import "dotenv/config";
 import { bindings, defineConfig, defineWorker } from "cf/config";
+
+const hyperdriveId =
+  process.env.CLOUDFLARE_HYPERDRIVE_ID?.trim() ||
+  "replace-with-your-hyperdrive-id";
+const localDatabaseUrl = process.env.TIGER_DATABASE_URL?.trim();
 
 export default defineConfig({
   worker: defineWorker({
@@ -14,6 +20,12 @@ export default defineConfig({
     env: {
       ASSETS: bindings.assets(),
       IMAGES: bindings.images(),
+      HYPERDRIVE: bindings.hyperdrive({
+        id: hyperdriveId,
+        ...(localDatabaseUrl
+          ? { dev: { connectionString: localDatabaseUrl } }
+          : {}),
+      }),
     },
   }),
 });
