@@ -6,21 +6,11 @@ import { pathToFileURL } from "node:url";
 const API_ROOT = "https://psi.nasa.gov/geode-py/ws";
 const NASA_ROOT = "https://psi.nasa.gov";
 const USER_AGENT = "Mozilla/5.0 (compatible; astroflame-psi-import/1.0)";
-const BATCH_SIZE = 500;
-const DATASETS = [
-  {
-    psiId: "PSI-26",
-    kind: "bass",
-    fileName: "PSI-26_Experimental table_BASS.csv",
-    maxBytes: 100_000,
-  },
-  {
-    psiId: "PSI-100",
-    kind: "telemetry",
-    fileName: "PSI-100_Raw Data_Saffire_Data_Table2017.161.00.42.03-EU.csv",
-    maxBytes: 10_000_000,
-  },
-];
+const DATASET = {
+  psiId: "PSI-26",
+  fileName: "PSI-26_Experimental table_BASS.csv",
+  maxBytes: 100_000,
+};
 
 const commonHeaders = {
   Accept: "application/json, text/plain, */*",
@@ -181,15 +171,6 @@ async function fetchDataset(dataset) {
   };
 }
 
-function parseOptionalNumber(value, column, rowNumber) {
-  if (value === undefined || value === null || value === "") return null;
-  const parsedValue = Number(value);
-  if (!Number.isFinite(parsedValue)) {
-    throw new Error(`Invalid number in ${column}, source row ${rowNumber}.`);
-  }
-  return parsedValue;
-}
-
 function parseBassDate(value, rowNumber) {
   const match = /^(\d{1,2})\/(\d{1,2})\/['`]?(\d{2}|\d{4})$/.exec(value ?? "");
   if (!match) {
@@ -223,76 +204,6 @@ export function mapBassRow(row, rowNumber) {
     fuelSampleMaterial: row["Fuel Sample Material"] || null,
     rawRow: row,
   };
-}
-
-export function mapTelemetryRow(row, rowNumber) {
-  const cygnusTimestampMs = parseOptionalNumber(
-    row.CygnusTimestamp,
-    "CygnusTimestamp",
-    rowNumber,
-  );
-  if (
-    cygnusTimestampMs === null ||
-    !Number.isSafeInteger(cygnusTimestampMs) ||
-    cygnusTimestampMs <= 0
-  ) {
-    return {
-      measurements: [],
-      rejection: {
-        sourceRowNumber: rowNumber,
-        reason:
-          "CygnusTimestamp is not a valid positive epoch-milliseconds timestamp.",
-        rawRow: row,
-      },
-    };
-  }
-
-  const observedAt = new Date(cygnusTimestampMs);
-  if (Number.isNaN(observedAt.getTime())) {
-    return {
-      measurements: [],
-      rejection: {
-        sourceRowNumber: rowNumber,
-        reason: "CygnusTimestamp is outside the supported date range.",
-        rawRow: row,
-      },
-    };
-  }
-
-  const relativeSeconds = parseOptionalNumber(
-    row.RelativeSeconds,
-    "RelativeSeconds",
-    rowNumber,
-  );
-  const measurements = [];
-  for (const [channel, rawValue] of Object.entries(row)) {
-    if (
-      channel === "RelativeSeconds" ||
-      channel === "CygnusTimestamp" ||
-      channel === "SaffireTimestamp" ||
-      rawValue === ""
-    ) {
-      continue;
-    }
-
-    const value = parseOptionalNumber(rawValue, channel, rowNumber);
-    if (value !== null) {
-      measurements.push({
-        observedAt: observedAt.toISOString(),
-        sourceRowNumber: rowNumber,
-        channel,
-        value,
-        relativeSeconds,
-        cygnusTimestampMs,
-        saffireTimestamp: row.SaffireTimestamp || null,
-      });
-    }
-  }
-
-  if (measurements.length === 0) {
-    throw new Error(`No numeric channels were found in source row ${rowNumber}.`);
-  }
-  return { measurements, rejection: null };
 }
 
 async function upsertInvestigation(client, dataset, imported) {
@@ -381,109 +292,15 @@ async function importBassRows(client, rows, sourceFileId) {
   return inserted;
 }
 
-async function insertMeasurementBatch(client, batch, investigationId, sourceFileId) {
-  const values = [];
-  const tuples = batch.map((measurement) => {
-    const start = values.length;
-    values.push(
-      measurement.observedAt,
-      investigationId,
-      sourceFileId,
-      measurement.sourceRowNumber,
-      measurement.channel,
-      measurement.value,
-      null,
-      measurement.relativeSeconds,
-      measurement.cygnusTimestampMs,
-      measurement.saffireTimestamp,
-    );
-    return `(${Array.from({ length: 10 }, (_, index) => `$${start + index + 1}`).join(", ")})`;
-  });
-
-  const result = await client.query(
-    `INSERT INTO telemetry_measurements (
-       observed_at, investigation_id, source_file_id, source_row_number,
-       channel, value, unit, relative_seconds, cygnus_timestamp_ms,
-       saffire_timestamp
-     )
-     VALUES ${tuples.join(", ")}
-     ON CONFLICT (
-       observed_at, source_file_id, source_row_number, channel
-     ) DO NOTHING`,
-    values,
-  );
-  return result.rowCount ?? 0;
-}
-
-async function importTelemetryRows(client, rows, sourceFileId) {
-  let inserted = 0;
-  let rejected = 0;
-  let batch = [];
-  await client.query(
-    "DELETE FROM telemetry_import_rejections WHERE source_file_id = $1",
-    [sourceFileId],
-  );
-
-  for (const [index, row] of rows.entries()) {
-    const mapped = mapTelemetryRow(row, index + 1);
-    if (mapped.rejection) {
-      await client.query(
-        `INSERT INTO telemetry_import_rejections (
-           source_file_id, source_row_number, reason, raw_row
-         )
-         VALUES ($1, $2, $3, $4::jsonb)
-         ON CONFLICT (source_file_id, source_row_number) DO UPDATE
-         SET reason = EXCLUDED.reason,
-             raw_row = EXCLUDED.raw_row,
-             recorded_at = now()`,
-        [
-          sourceFileId,
-          mapped.rejection.sourceRowNumber,
-          mapped.rejection.reason,
-          JSON.stringify(mapped.rejection.rawRow),
-        ],
-      );
-      rejected += 1;
-      continue;
-    }
-
-    batch.push(...mapped.measurements);
-    while (batch.length >= BATCH_SIZE) {
-      inserted += await insertMeasurementBatch(
-        client,
-        batch.slice(0, BATCH_SIZE),
-        "PSI-100",
-        sourceFileId,
-      );
-      batch = batch.slice(BATCH_SIZE);
-    }
-  }
-  if (batch.length > 0) {
-    inserted += await insertMeasurementBatch(
-      client,
-      batch,
-      "PSI-100",
-      sourceFileId,
-    );
-  }
-  return { inserted, rejected };
-}
-
 async function importDataset(client, dataset, imported) {
   await client.query("BEGIN");
   try {
     await upsertInvestigation(client, dataset, imported);
     const sourceFileId = await upsertSourceFile(client, dataset, imported);
-    const result =
-      dataset.kind === "bass"
-        ? {
-            inserted: await importBassRows(client, imported.rows, sourceFileId),
-            rejected: 0,
-          }
-        : await importTelemetryRows(client, imported.rows, sourceFileId);
+    const inserted = await importBassRows(client, imported.rows, sourceFileId);
     await client.query("COMMIT");
     console.log(
-      `${dataset.psiId}: processed ${imported.rows.length} CSV rows; ${result.inserted} database rows affected; ${result.rejected} source rows quarantined.`,
+      `${dataset.psiId}: processed ${imported.rows.length} CSV rows; ${inserted} database rows affected.`,
     );
   } catch (error) {
     await client.query("ROLLBACK");
@@ -500,39 +317,23 @@ async function main() {
     );
   }
 
-  for (const dataset of DATASETS) {
-    console.log(`Downloading the selected public NASA CSV for ${dataset.psiId}...`);
-    const imported = await fetchDataset(dataset);
-    if (dryRun) {
-      if (dataset.kind === "bass") {
-        for (const [index, row] of imported.rows.entries()) {
-          mapBassRow(row, index + 1);
-        }
-        console.log(
-          `${dataset.psiId}: ${imported.rows.length} valid BASS experiment rows.`,
-        );
-      } else {
-        let measurements = 0;
-        let rejected = 0;
-        for (const [index, row] of imported.rows.entries()) {
-          const mapped = mapTelemetryRow(row, index + 1);
-          measurements += mapped.measurements.length;
-          if (mapped.rejection) rejected += 1;
-        }
-        console.log(
-          `${dataset.psiId}: ${imported.rows.length} CSV rows; ${measurements} numeric channel values; ${rejected} source rows will be quarantined because their timestamp is invalid.`,
-        );
-      }
-      continue;
+  console.log(`Downloading the selected public NASA CSV for ${DATASET.psiId}...`);
+  const imported = await fetchDataset(DATASET);
+  if (dryRun) {
+    for (const [index, row] of imported.rows.entries()) {
+      mapBassRow(row, index + 1);
     }
-
+    console.log(
+      `${DATASET.psiId}: ${imported.rows.length} valid BASS experiment rows.`,
+    );
+  } else {
     const client = new Client({
       connectionString,
       connectionTimeoutMillis: 10_000,
     });
     try {
       await client.connect();
-      await importDataset(client, dataset, imported);
+      await importDataset(client, DATASET, imported);
     } finally {
       await client.end();
     }

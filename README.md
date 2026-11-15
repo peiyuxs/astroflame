@@ -1,394 +1,466 @@
 # AstroFlame
 
-AstroFlame is a NASA Space Apps 2026 project. It includes an evidence-bounded
-microgravity flame-spread simulator and read-only API endpoints for selected
-NASA Physical Sciences Informatics (PSI) data. Imported PSI data is stored in
-TigerData (TimescaleDB); Cloudflare Workers and Hyperdrive provide the hosted
-application and its database connection.
+[AstroFlame](https://astroflame.study) is a NASA Space Apps 2026 project for
+exploring microgravity flame spread over PMMA fuel surfaces. The site includes
+an interactive simulator, a measured-versus-predicted BASS comparison, and
+read-only JSON data endpoints.
 
-The UI uses React and TypeScript with Next.js App Router-style files, built and
-run through vinext and Vite for Cloudflare Workers. The simulator logic is
-TypeScript and works independently of imported database data. The Analysis
-section is intentionally blank, and the Documentation page is currently a
-plain-text placeholder.
+The project uses **SAFFIRE-V** data for its ribbed-PMMA comparison because that
+dataset provides a more comprehensive experimental set for rib-width-dependent
+flame spread. This project name refers to the NASA
+[SAFFIRE-V project](https://techport.nasa.gov/projects/13543).
 
-## What the application does
+## What the site does
 
-- Imports the BASS experiment table from NASA investigation **PSI-26**.
-- Imports the SAFFIRE-III telemetry table from NASA investigation **PSI-100**.
-- Preserves NASA source rows and records the source file for each import.
-- Stores telemetry as time-series measurements in a TimescaleDB hypertable.
-- Keeps measurements with invalid timestamps in a rejection table for review.
-- Serves investigation details, experiments, measurements, and rejected rows
-  from read-only API endpoints. The UI does not currently display a telemetry
-  chart.
-- Estimates BASS flame-spread rate from the supplied exploratory model results.
-- Simulates opposed and concurrent flame spread using BASS and SAFFIRE-5
-  experimental datasets.
-- Provides a blank Analysis section for future project-specific analysis.
-- Provides a Documentation page with placeholder text for the future model
-  methodology write-up.
+- **Simulator:** runs a bounded flame-spread model in the visitor's browser.
+  The model is written in TypeScript and does not need a database to run.
+- **Analysis:** compares 39 curated BASS-II measurements from 18 experiments
+  with predictions from the simulator's regression form. It groups residuals
+  (measured minus predicted) by airflow, sample thickness, or initial oxygen.
+  Predictions are evaluated using grouped leave-one-experiment-out
+  cross-validation: all observations from one experiment are withheld while
+  the model is fit, then used for comparison.
+- **Data API:** serves selected BASS experiment records and the BASS analysis
+  results as JSON. The browser asks the app for this data; it never connects
+  directly to the database.
 
-The importer downloads only the selected public CSV files, not NASA's large
-raw-data archives.
+## Project goal and intended audience
 
-## Simulator and model boundaries
+AstroFlame is an **evidence-bounded learning and research-exploration tool**.
+Its goal is to make microgravity flame-spread measurements easier to explore,
+show how a simple model responds to inputs, and make the model's evidence
+limits visible.
 
-The test selector offers two source-like regimes. BASS models smooth PMMA with
-bounded airflow (2–21 cm/s), oxygen (17.9–22.2%), and thickness (0.1–0.5 cm)
-controls. Its surface geometry is 10 × 2.2 cm for the visualization (the
-reference reports specimen widths of 1.2 or 2.2 cm and assumes a 10 cm length).
-The airflow-inclusive comparison regression represents opposed-flow spread,
-against the incoming airflow vector. It is used to honor the airflow control,
-although it performed slightly worse in grouped validation than the
-thickness-plus-oxygen equation; it is not a validated physical law.
+The primary audience is undergraduate and graduate students, teachers, and
+professors studying combustion, data science, or space science. Researchers
+can also use it to explore hypotheses and compare model output with the
+curated data. It is not a certified engineering tool: mission planners should
+not use its results to choose materials, change ventilation, or make
+operational fire-safety decisions.
 
-SAFFIRE-5 models a 40 × 20 cm ribbed PMMA specimen, 1 cm thick, with 3 cm
-high ribs, at the reported 76.1 kPa and 26.9% oxygen. Airflow is restricted to
-the two measured settings, 5 or 20 cm/s. Rib-width-dependent opposed FSR uses
-piecewise interpolation between the approximate digitizations in
-`elig-data/combine_fsr_data.csv`, never extrapolating beyond available values
-for the selected airflow. The data are from one experiment and are not
-independently validated.
+Useful learning activities include comparing modeled rates with the measured
+BASS records, seeing how results change within the tested input ranges, and
+using an unexpected result to propose another controlled experiment. These
+activities support research and teaching; they do not produce spacecraft
+design or operational safety recommendations.
 
-Both regimes use an angular front: lateral rate is 0.85 times opposed rate,
-and concurrent rate is `k` times opposed rate. The default `k = 2.1` reflects
-reported NASA microgravity tests; the user may explore 0.5–4.0, with 1.5–4.0
-recommended. The map shows directional propagation over the sample's actual
-planform dimensions. Outputs include simulated full-surface spread time,
-instantaneous and average burned-area growth, burned percentage, and opposed,
-lateral, and concurrent front velocities. Animation is accelerated for
-demonstration; reported values use model time. The simulator stays within a
-viewport-height section; its controls collapse when the section comes into view
-and can be reopened with the edge tab. The model-time clock and growth chart use
-the same simulated-time samples.
+## Where the data comes from
 
-A persistent warning explains that predictions near or outside the empirical
-dataset ranges are physically uncertain. BASS and SAFFIRE-5 are separate
-source-like regimes and must not be mixed into unsupported input combinations.
-The models do not estimate ignition, probability of spread, burn duration, or
-a limiting oxygen concentration. Do not use the simulator for fire-safety
-decisions.
+The comparison data is the curated project file
+[`elig-data/astroflame_formatted_cgs.csv`](elig-data/astroflame_formatted_cgs.csv).
+It contains 39 BASS-II PSI-25 observations and 18 digitized SAFFIRE-V
+observations. The importer keeps source labels, experiment and
+observation IDs, measurement notes, and provenance fields alongside the
+values. NASA's [TechPort page](https://techport.nasa.gov/projects/13543)
+provides SAFFIRE-V project context; it is not itself a direct measurement-file
+download endpoint.
 
-The simulator does not query TigerData. Its calculations use the TypeScript
-model and local empirical inputs. The blank Analysis section has no telemetry
-widget or dataset chart. Database-backed data remains available through the
-read-only API routes listed below.
+The simulator's input bounds and model data are in the TypeScript source and
+the repository's curated data. The simulator does **not** query TigerData.
+The Analysis page does query TigerData for the curated BASS observations, then
+fits and evaluates the grouped model on the server.
 
-## What each technology does
+The repository also has a separate importer for BASS experiment records from
+NASA PSI-26. It is exposed through the experiments API. Old PSI-100 telemetry
+is not part of the active importer, database schema, API, or public UI. Old
+archived research files remain historical records and are not changed or
+relabeled.
 
-- **React and TypeScript** build the interactive pages and simulator. TypeScript
-  is also used for the flame-spread equations and simulation state.
-- **Next.js conventions** organize pages under `app/`, with `page.tsx` files
-  defining pages and `app/api/**/route.ts` files defining HTTP endpoints.
-  This repository does not run the standard `next dev` or `next build`
-  commands: vinext supplies the Next-compatible app runtime through Vite.
-- **Vite** runs the local development server and production build. The
-  Cloudflare Vite plugin configures the app to run as a Cloudflare Worker.
-- **Cloudflare Workers** run the deployed site and API code. **Hyperdrive**
-  provides the Worker a managed connection to TigerData without putting a
-  database password in browser code.
-- **TigerData** is the hosted PostgreSQL database with TimescaleDB features.
-  It stores imported source rows and timestamped measurements. It is not
-  required by the simulator's calculations. The project currently uses
-  Cloudflare's beta `cf` CLI and Vite plugin; follow the repository's npm
-  scripts rather than assuming a standard Wrangler or Next.js workflow.
-- **Node.js scripts** download and validate the selected public NASA CSV files
-  and write them to TigerData. The active application does not use Python for
-  its model or database pipeline.
+## How the parts fit together
 
-### Adding a page or API route
-
-This project uses the Next.js App Router file layout through vinext:
-
-1. Add a folder below `astroflame/app/` for the URL you want.
-2. Add `page.tsx` in that folder and export a React page component. For
-   example, `app/documentation/page.tsx` serves `/documentation`.
-3. For an HTTP endpoint instead of a page, add
-   `app/api/<name>/route.ts` and export a method such as `GET`.
-4. Run `npm run dev` to check it locally, then `npm run build` to validate the
-   production Worker bundle.
-
-The shared navigation, footer, and global page metadata live in
-`astroflame/app/layout.tsx`. Do not use `next dev` or `next build`; the
-repository's Vite/vinext scripts provide the runtime and build.
-
-## How it works
-
-1. The Node.js importer downloads two selected public NASA CSV files and
-   validates their rows.
-2. The migration script applies the schema in
-   [`astroflame/db/schema.sql`](astroflame/db/schema.sql). The importer then
-   connects directly to TigerData with `TIGER_DATABASE_URL` and writes the
-   imported rows.
-3. The web/API runtime connects through Cloudflare's `HYPERDRIVE` binding.
-   `cloudflare.config.ts` reads the binding ID from the local `.env` file.
-4. The React pages and API route handlers live under
-   [`astroflame/app`](astroflame/app). API handlers return JSON; the browser
-   does not connect directly to PostgreSQL.
-
-## Cloudflare, in beginner-friendly terms
-
-Think of the data path as three separate parts:
-
-- **TigerData is the database.** It stores the imported NASA rows and
-  timestamped SAFFIRE sensor readings.
-- **Cloudflare Workers runs the website and its API.** When someone opens the
-  deployed site, the Worker serves the page and runs API routes. Cloudflare is
-  not where the scientific data is stored.
-- **Hyperdrive is the connection between the Worker and TigerData.** It gives
-  the Worker a managed PostgreSQL connection and keeps database connection
-  details out of browser code. It is not another database and does not import,
-  clean, or analyze NASA data.
-
-The page and database paths are separate:
+Think of the system as two data paths:
 
 ```text
-Visitor browser ──page request──→ Cloudflare Worker
-API client ──JSON request───────→ Cloudflare Worker ──Hyperdrive──→ TigerData
-Local importer ──CSV download───→ NASA PSI
-Local importer ──database write───────────────────────────────→ TigerData
+Simulation:
+Visitor's browser -> TypeScript model -> flame map, timer, and growth chart
+
+Stored-data analysis:
+Curated CSV -> local Node.js import script -> TigerData PostgreSQL
+Visitor's browser -> Cloudflare Worker API -> Hyperdrive -> TigerData
 ```
 
-The browser only talks to the Worker; it never receives the database password.
-The importer is different: it runs on your computer and connects directly to
-TigerData using `TIGER_DATABASE_URL`. For local development,
-`cloudflare.config.ts` also uses that URL as the local Hyperdrive connection
-when it is set. The deployed Worker uses the connection saved in its
-Hyperdrive configuration.
+- **Cloudflare Workers** runs the website and API.
+- **Hyperdrive** is Cloudflare's managed connection from the Worker to the
+  database. It keeps database credentials out of browser code.
+- **TigerData** stores the curated measurements and imported PSI-26 BASS rows.
+  In this project it is used as PostgreSQL storage; the spread-rate
+  observations are fixed experiment records, not time-series telemetry.
+- **React and TypeScript** make the interface and run the simulator.
+- **Vite and vinext** run and build the app. The folders use Next.js App
+  Router conventions, but this repository does not run the standard Next.js
+  CLI.
+- **Node.js scripts** validate and import the CSV data. SQL in
+  `astroflame/db/schema.sql` describes the database tables.
+- **Python** is not used by the active app, simulator, analysis, or database
+  import path. An optional older NASA file downloader is kept under
+  `archive/misc/`.
 
-In short, **Cloudflare hosts and runs the web app/API, TigerData stores the
-data, and Hyperdrive connects the two**. The simulator calculations do not
-read from TigerData. The database is used by the optional read-only data API.
+## Model scope and cautions
 
-## Requirements
+The BASS controls are bounded to the available experimental ranges: airflow
+2–21 cm/s, oxygen 17.9–22.2%, and fuel thickness 0.1–0.5 cm. The simulated
+surface is based on the BASS sample geometry. SAFFIRE-V airflow is restricted
+to the measured 5 or 20 cm/s settings; the rib-width spread-rate values are
+interpolated only within the digitized values available for the selected
+airflow.
 
-- Node.js 22.23+, 24.22+, or 26.12+ (supported Cloudflare CLI versions), and
-  npm.
-- A [TigerData](https://console.cloud.timescale.com/) account with a
-  PostgreSQL service that has TimescaleDB enabled.
-- A [Cloudflare](https://dash.cloudflare.com/) account with Workers access.
-- Git, if you are cloning the repository.
-- Python is not required for the active web app, simulator, or database
-  importer. The optional archived downloader is described below.
+The opposed-flow rate points against the incoming airflow. The model also
+shows lateral and concurrent directions using the simulator's directional
+spread assumptions. Those assumptions and the concurrent multiplier are
+exploration controls, not additional measurements for every scenario.
 
-## Set up the project locally
+Predictions near or outside the measured ranges are uncertain. The model is
+for scientific exploration and is **not** a fire-safety or operational
+prediction tool. It does not estimate ignition probability, burn duration, or
+a limiting oxygen concentration.
 
-### 1. Download the project and install JavaScript dependencies
+## Gemini learning notes
 
-Open a terminal, clone the repository, and install the locked dependencies:
+When a simulation finishes, the browser sends a small summary of its scenario,
+settings, ignition location, and completed results to the server route
+`POST /api/simulation/insights`. The route checks the scenario inputs against
+the simulator's bounds, adds the relevant evidence notes, and calls the
+Gemini API using the `gemini-3.8-flash` model. Gemini returns a short summary,
+observations, a possible non-operational research application, a research
+question, and limitations; the interface checks the response shape before
+displaying it in the **AI learning notes** dashboard card.
 
-```bash
+The simulator calculates all numbers. Gemini only writes explanatory text;
+it cannot change the run, its equations, or its results. The notes are
+educational and can be wrong, so they are labeled AI-generated and are not
+safety or mission-operational advice. A missing key, network error, or Gemini
+failure does not stop or erase a simulation. The notes are not saved to
+TigerData. The simulation summary is sent to Google's Gemini API, so users
+should not include private or sensitive information in scenario data.
+
+The integration uses the Gemini REST API from server-side code and adds no
+Google SDK dependency. The API key is read only by the server Worker, never
+sent to browser code. Before making this public, restrict the Google key to the
+Gemini API, set an appropriate usage quota, and configure Cloudflare rate
+limiting for `/api/simulation/insights`; this endpoint can use your Gemini
+quota.
+
+## Beginner setup: run the site locally
+
+### You will need
+
+- Node.js 22.23+, 24.22+, or 26.12+, plus npm, for the current Cloudflare
+  command-line tooling.
+- A Cloudflare account to authenticate the local Worker runtime.
+- The repository's environment settings. The simulator code itself does not
+  need TigerData, but the development configuration requires a Hyperdrive ID.
+- A TigerData service only if you want to run the database-backed Analysis/API
+  locally or import data.
+
+### 1. Install the project
+
+Open PowerShell or a terminal, then run:
+
+```powershell
 git clone https://github.com/peiyuxs/nasaspaceapps26.git
-cd nasaspaceapps26/astroflame
+Set-Location nasaspaceapps26\astroflame
 npm ci
 ```
 
-`npm ci` installs the versions recorded in `package-lock.json`. If you change
-dependencies, use `npm install` to update that lock file.
+`npm ci` installs the exact package versions recorded by the project.
 
-### 2. Create the local environment file
-
-Copy the example file. In PowerShell, run:
+### 2. Create the local settings file
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-In Bash, use `cp .env.example .env`. Fill in both values in `.env` after
-following the TigerData and Cloudflare setup steps below. The file is ignored
-by Git; never commit database passwords or API secrets.
+Open `astroflame/.env` and set:
 
-The local Cloudflare config checks for a Hyperdrive ID when the app starts, so
-set up Cloudflare even if you only want to try the simulator. The simulator
-itself does not make database queries, but the development server still loads
-the Cloudflare configuration.
+```dotenv
+CLOUDFLARE_HYPERDRIVE_ID=your-cloudflare-hyperdrive-id
+TIGER_DATABASE_URL=your-private-tigerdata-postgresql-connection-string
+```
 
-### 3. Set up TigerData and Cloudflare
+Never commit or share `.env`; the database URL contains a password. For local
+simulation-only work, the database does not need to be populated, but
+`cloudflare.config.ts` still requires a Hyperdrive configuration ID.
 
-Follow [Set up TigerData](#set-up-tigerdata), then
-[Connect Cloudflare to TigerData](#connect-cloudflare-to-tigerdata). Run the
-migration and import steps if you want the database API to return data.
+### 3. (Optional) Set up Gemini learning notes
 
-### 4. Authenticate and start the local app
+If you want the AI note after each run:
 
-From the `astroflame` directory, sign in to Cloudflare and start the server:
+1. Create a Gemini API key in
+   [Google AI Studio](https://aistudio.google.com/apikey). Review the
+   [Gemini API key guidance](https://ai.google.dev/gemini-api/docs/api-key)
+   and your account's usage limits.
+2. From `astroflame/`, make the local secret file:
 
-```bash
+   ```powershell
+   Copy-Item .dev.vars.example .dev.vars
+   ```
+
+3. Open `.dev.vars` and replace the example value:
+
+   ```dotenv
+   GEMINI_API_KEY=your-private-gemini-api-key
+   ```
+
+   `.dev.vars` is ignored by Git. Never commit it, paste it into browser code,
+   or share it. The example file contains only a placeholder.
+
+If no key is set, the simulator still works and the notes card explains that
+Gemini is not configured.
+
+### 4. Authenticate and start the website
+
+```powershell
 npx cf auth login
 npm run dev
 ```
 
-Open the URL printed in the terminal (normally
+Open the local URL printed by the command (usually
 `http://localhost:5173`). Stop the server with `Ctrl+C`.
 
-The API's database endpoints need a migrated, populated database and a working
-Hyperdrive connection. The homepage and simulator do not depend on imported
-data.
+To try Gemini, choose a scenario, click **Run**, and wait for the simulation
+to finish. The AI learning notes card should first show a loading state, then
+the summary, observations, possible research application, and research
+question. To check the feature code without making a Google API request, run
+`npm run test:insights`.
 
-## Set up TigerData
+## Beginner setup: TigerData and database data
+
+TigerData provides a managed PostgreSQL database. The steps below create its
+tables and load the repository's curated measurement rows.
+
+### 1. Create a TigerData database
 
 1. Sign in to the [TigerData console](https://console.cloud.timescale.com/).
-2. Create a PostgreSQL service, or choose a service you already own. Confirm
-   that TimescaleDB is enabled; the schema creates a hypertable using
-   `tsdb.hypertable`.
-3. Open the service's connection details and copy its **direct PostgreSQL
-   connection string**. Keep the password private.
-4. Open `.env` in the `astroflame` folder and replace `TIGER_DATABASE_URL`
-   with the connection string
-   from TigerData. It should look similar to this:
+2. Create a PostgreSQL service, or select a service you control.
+3. Copy its direct PostgreSQL connection string from the connection details.
+4. Put that connection string in `TIGER_DATABASE_URL` in `astroflame/.env`.
+   Keep it private.
 
-   ```dotenv
-   TIGER_DATABASE_URL=postgresql://USERNAME:PASSWORD@HOST:PORT/DATABASE?sslmode=require
+### 2. Create the tables
+
+From `astroflame/`, run:
+
+```powershell
+npm run db:migrate
+```
+
+This sends the SQL in `db/schema.sql` to the database. The schema contains:
+
+- `spread_rate_observations`: curated BASS and SAFFIRE-V spread-rate
+  measurements used by the Analysis API.
+- `investigations`, `source_files`, and `bass_experiments`: source metadata
+  and BASS rows for the PSI-26 experiments endpoint.
+
+The migration creates missing tables and converts any stored legacy
+SAFFIRE regime labels to the current `SAFFIRE-V` label. It does not import
+data or delete historical database tables.
+
+### 3. Preview and import the Analysis data
+
+First preview locally. This reads the CSV, checks required fields, calculates
+the grouped BASS validation, and does **not** connect to or change TigerData:
+
+```powershell
+npm run analysis:preview
+```
+
+Then, when you intend to write the curated rows to the database:
+
+```powershell
+npm run analysis:import
+```
+
+The importer replaces the rows previously loaded from this same curated source
+file in `spread_rate_observations`, inside a database transaction. It loads
+BASS and SAFFIRE-V records; only the BASS rows are used for the current
+measured-versus-predicted Analysis view.
+
+### 4. Check that the TigerData connection and data work
+
+These are end-to-end checks for your own local setup. They require your local
+`.env`, a TigerData service, the tables, and the imported analysis data.
+
+1. Start the website from `astroflame/`:
+
+   ```powershell
+   npm run dev
    ```
 
-   Use TigerData's connection string if its format differs. If the password
-   contains special URL characters, use the URL-encoded value provided by
-   TigerData. The `.env` file is ignored by Git; do not commit or share it.
-   The `CLOUDFLARE_HYPERDRIVE_ID` value is needed to start the local app; add
-   the Hyperdrive configuration ID as described in the Cloudflare section
-   below. The ID is not a password, but the database credentials must remain
-   private.
-5. Create the database tables and indexes:
+2. In a second PowerShell window, ask the app if it can reach the database:
 
-   ```bash
-   npm run db:migrate
+   ```powershell
+   Invoke-RestMethod http://localhost:5173/api/health/db
    ```
 
-   A successful run prints `Database schema is ready.` The migration uses
-   `CREATE ... IF NOT EXISTS` and can be run again.
-6. Preview the selected NASA files before importing:
+   A working connection replies with `status: ok` and `database: connected`.
+3. Ask the Analysis API for the stored BASS comparison:
 
-   ```bash
-   npm run data:preview
+   ```powershell
+   $result = Invoke-RestMethod http://localhost:5173/api/analysis/bass
+   $result.metrics
+   $result.records.Count
+   $result.groups
    ```
 
-   Preview downloads and validates the CSV files but does not connect to or
-   change the database.
-7. Import the datasets:
+   You should see 39 records, metrics, and grouped residual summaries. Try
+   `http://localhost:5173/api/analysis/bass?groupBy=thicknessCm` to group by
+   thickness instead of airflow.
+4. Open `http://localhost:5173/`, scroll to **Analysis**, and change
+   **Group residuals by**. The scatter plot and table should load from the
+   same API.
 
-   ```bash
-   npm run data:import
-   ```
+If the health check fails, check the TigerData URL, network access, and local
+Hyperdrive settings. If health works but the analysis endpoint says no BASS
+data is loaded, run `npm run analysis:preview` first; if that succeeds, run
+`npm run analysis:import` to load it. The preview is safe and read-only; the
+import command writes to your database.
 
-   The importer can be run again safely. It updates investigation and source
-   file details, upserts BASS rows, and ignores duplicate telemetry
-   measurements.
+`npm run test:analysis` tests the data validation and model logic without
+connecting to TigerData. Passing those tests alone does not confirm that your
+database credentials or Cloudflare connection work.
 
-The schema separates investigation and file metadata from the source data.
-`bass_experiments` keeps each imported BASS CSV row, while
-`telemetry_measurements` stores timestamped SAFFIRE-III channel values in a
-TimescaleDB hypertable. Rows with unusable timestamps are recorded in
-`telemetry_import_rejections` instead of being assigned invented times.
-`source_files` links imported rows back to their NASA file and version.
+### 5. (Optional) Import PSI-26 BASS experiment records
 
-## Connect Cloudflare to TigerData
+This is a separate NASA PSI download and database import from the curated
+Analysis data:
 
-The Worker uses Cloudflare Hyperdrive to reach the same TigerData database.
-The settings below connect Cloudflare to the database; they do not upload the
-NASA CSV files. The importer step above is what imports data.
+```powershell
+npm run data:preview
+npm run data:import
+```
 
-1. Sign in to the [Cloudflare dashboard](https://dash.cloudflare.com/) and
-   open **Workers & Pages → Hyperdrive**.
-2. Create a Hyperdrive configuration for PostgreSQL, using the TigerData
-   service's host, port, database name, username, and password. Keep SSL
-   enabled or required. Hyperdrive stores the database credentials; do not
-   place them in this repository.
-3. Copy the Hyperdrive configuration ID into `CLOUDFLARE_HYPERDRIVE_ID` in
-   the `astroflame/.env` file. The project reads this value in
-   [`astroflame/cloudflare.config.ts`](astroflame/cloudflare.config.ts) when
-   starting or deploying the Worker.
-4. From the `astroflame` folder, authenticate the Cloudflare CLI:
+Preview validates the selected public PSI-26 CSV without a database write.
+The import command writes its source metadata and BASS experiment rows to
+TigerData.
 
-   ```bash
+## Beginner setup: connect Cloudflare to TigerData
+
+Cloudflare Workers runs the deployed site. A Worker cannot safely use a
+database password embedded in browser JavaScript. Hyperdrive is the
+Cloudflare-managed bridge that lets Worker API code connect to TigerData.
+
+1. In the [Cloudflare dashboard](https://dash.cloudflare.com/), open
+   **Workers & Pages → Hyperdrive**.
+2. Create a Hyperdrive configuration for the same TigerData PostgreSQL
+   service. Enter the host, port, database, username, and password from
+   TigerData; keep SSL enabled.
+3. Copy the Hyperdrive configuration ID to `CLOUDFLARE_HYPERDRIVE_ID` in
+   `astroflame/.env`.
+4. Authenticate the CLI if needed:
+
+   ```powershell
    npx cf auth login
    ```
 
-5. To run locally, use `npm run dev`. To deploy the application, run:
+5. To build locally, run `npm run build`. To publish a Worker, run
+   `npm run deploy` from `astroflame/`.
 
-   ```bash
-   npm run deploy
-   ```
+The deployed Worker uses the Cloudflare Hyperdrive binding. The local database
+scripts use `TIGER_DATABASE_URL` directly. Do not deploy or import data unless
+you intend to make those changes to your own Cloudflare account/database.
 
-The deployed Worker gets its database connection through the `HYPERDRIVE`
-binding, not through `TIGER_DATABASE_URL`. The direct URL is used by local
-database scripts and, when provided, the local Hyperdrive connection.
+## Add the Gemini key to a deployed Worker
 
-## Check the deployed application
+Local `.dev.vars` only applies to your local development server. To enable
+Gemini on a deployed Worker:
 
-After deployment, the CLI prints the Worker URL. Replace
-`https://<worker-url>` in the following examples with that URL.
+1. Open Cloudflare **Workers & Pages**, choose the `astroflame` Worker, and
+   open **Settings → Variables and Secrets**.
+2. Add a secret named `GEMINI_API_KEY` and paste the key value into Cloudflare's
+   secret field. Do not add it as a public `NEXT_PUBLIC_*` or `VITE_*` setting.
+   See Cloudflare's
+   [Worker secrets guide](https://developers.cloudflare.com/workers/configuration/secrets/).
+3. Use your normal, separately approved deployment process for the Worker.
+   This README does not deploy the site.
+4. Check the worker logs and API quota if the notes show an error.
 
-First check the database connection:
+The API key is a billable/quota-controlled credential. Keep it restricted to
+Gemini API access and set usage limits in Google AI Studio/Google Cloud.
+Because the notes endpoint is public, apply a Cloudflare rate-limit rule to
+`POST /api/simulation/insights` before enabling it for public traffic.
 
-```text
-https://<worker-url>/api/health/db
-```
+## API endpoints
 
-On success, the endpoint responds with:
+The app's API routes return JSON. A beginner-friendly way to think about an
+endpoint is: it is a URL that accepts a request and replies with structured
+data rather than a full web page.
 
-```json
-{"status":"ok","database":"connected"}
-```
-
-The health endpoint does not expose database credentials. The read-only data
-endpoints are:
-
-| Endpoint | Returns |
+| Endpoint | What it returns |
 | --- | --- |
-| `/api/investigations` | Imported investigation metadata |
-| `/api/investigations/PSI-26/experiments?limit=100` | Up to 100 BASS experiment rows |
-| `/api/investigations/PSI-100/measurements?limit=100` | Up to 100 SAFFIRE-III measurements |
-| `/api/investigations/PSI-100/timeseries?channel=<channel>&limit=500` | Up to 500 recent SAFFIRE-III readings for a sensor channel; without `channel`, returns available channels and the first channel's readings |
-| `/api/investigations/PSI-100/rejections?limit=100` | Up to 100 telemetry rows rejected for invalid timestamps |
+| `GET /api/health/db` | Whether the Worker can reach the database |
+| `GET /api/investigations` | PSI-26 investigation metadata |
+| `GET /api/investigations/PSI-26/experiments?limit=100` | Up to 100 imported PSI-26 BASS experiment records |
+| `GET /api/analysis/bass` | BASS measurements, grouped held-out predictions, and error metrics for the chart |
+| `GET /api/analysis/bass?groupBy=thicknessCm` | Same analysis, with residual summaries grouped by thickness |
+| `GET /api/analysis/bass?groupBy=oxygenInitialPct` | Same analysis, grouped by initial oxygen |
+| `POST /api/simulation/insights` | Validates one completed simulation summary and returns Gemini learning notes |
 
-The optional `limit` parameter defaults to 100 and must be between 1 and 500.
-The measurements endpoint also accepts `from`, `to`, and `channel` filters.
-For example:
+`groupBy` accepts `airflowCmS`, `thicknessCm`, or `oxygenInitialPct`. The API
+returns an error if its database connection or required data is unavailable.
+The Analysis view needs the spread-rate migration and the curated import; it
+does not use the PSI-26 importer.
 
-```text
-/api/investigations/PSI-100/measurements?from=2017-06-06T14:00:00Z&to=2017-06-06T15:00:00Z&channel=ChannelA
-```
+## Next.js-style pages and routes
 
-The `from` and `to` values can be ISO dates or timestamps. Invalid IDs or
-filters return `400`; database failures return `503`.
+This codebase uses a Next.js-like folder layout through vinext:
 
-## Useful commands
+- `astroflame/app/page.tsx` is the home page.
+- `astroflame/app/documentation/page.tsx` serves `/documentation`.
+- A folder such as `astroflame/app/api/example/route.ts` defines API handlers
+  for `/api/example`.
 
-Run these commands from `astroflame`:
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the local Vite development server |
-| `npm run build` | Build the application for Cloudflare Workers |
-| `npm run start` | Preview a previously built application |
-| `npm run preview` | Build, then preview the production output |
-| `npm run deploy` | Deploy the Worker to Cloudflare |
-| `npm run db:migrate` | Create the TigerData tables and indexes |
-| `npm run data:preview` | Download and validate NASA CSVs without database writes |
-| `npm run data:import` | Import the selected NASA CSV data |
-| `npm run test:import` | Run the focused importer tests |
-| `npm run test:model` | Run the BASS model and flame-simulation tests |
-| `npx tsc --noEmit` | Check TypeScript types without emitting files |
-
-Run the importer tests with:
-
-```bash
-npm run test:import
-```
-
-## Python utilities (archived and optional)
-
-The active simulator, web app, database migration, and NASA data importer do
-not use Python. The older `archive/misc/downloadfiles.py` utility is separate:
-it can browse and download files from a NASA PSI investigation to a local
-folder, or upload them to Cloudflare R2. It does not populate the AstroFlame
-database.
-
-To run that archived utility, install Python 3, then from the repository root:
+The project commands are based on Vite and vinext, not `next dev` or
+`next build`:
 
 ```powershell
-cd archive/misc
+npm run dev
+npm run build
+```
+
+Shared navigation and page metadata are in `astroflame/app/layout.tsx`.
+
+## Playwright browser testing
+
+Playwright is **not currently installed or configured** in this repository.
+Existing automated tests use Node's test runner. If you want browser
+automation later, add it from `astroflame/`:
+
+```powershell
+npm install --save-dev @playwright/test
+npx playwright install
+```
+
+Then create `playwright.config.ts`, add browser tests, and configure its
+`webServer` to start `npm run dev`. Add a script such as
+`"test:e2e": "playwright test"` to `package.json`, then run:
+
+```powershell
+npm run test:e2e
+```
+
+Tests that exercise database-backed pages need a reachable TigerData service,
+the schema, and imported rows. Do not put database credentials in test code.
+
+## Python and the database/model logic
+
+The currently used model, simulator, Analysis calculation, and database
+importers are **not Python**:
+
+- `astroflame/lib/` contains the TypeScript model, simulation, and grouped
+  validation logic.
+- `astroflame/scripts/` contains Node.js scripts that parse and validate CSV
+  files, then use PostgreSQL to import rows.
+- `astroflame/db/schema.sql` defines the tables and indexes.
+- `astroflame/app/api/` contains server-side JSON endpoints. The Analysis
+  endpoint reads BASS observations from TigerData and calculates predictions
+  and residuals.
+
+An older optional Python downloader is in `archive/misc/`; it downloads files
+from NASA PSI and is separate from the active app and TigerData pipeline. To
+use it, install Python 3 and run from the repository root:
+
+```powershell
+Set-Location archive\misc
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
@@ -396,94 +468,49 @@ python downloadfiles.py --list-only
 python -m unittest -v test_downloadfiles.py
 ```
 
-In macOS or Linux shells, activate the environment with
-`source .venv/bin/activate` instead. Downloading to a local folder does not
-need Cloudflare credentials. To use its optional R2 destination, copy
-`archive/misc/.env.example` to `archive/misc/.env` and fill in the R2 account
-ID and access keys. Keep those credentials private; never commit `.env`.
+This utility does not populate the AstroFlame database. Its optional Cloudflare
+R2 upload requires separate credentials; never commit them.
 
-## Browser testing with Playwright (not configured)
+## Useful commands
 
-This repository currently has no Playwright dependency, config, or browser
-tests. The existing automated tests use Node's built-in test runner (see
-`npm run test:model` and `npm run test:import`).
+Run these from `astroflame/`:
 
-If you want to add end-to-end browser tests later:
-
-1. From `astroflame`, install Playwright's test package:
-   `npm install --save-dev @playwright/test`.
-2. Install a browser for Playwright:
-   `npx playwright install`.
-3. Add a `playwright.config.ts` and tests under a test folder. Configure
-   Playwright's `webServer` to run `npm run dev`, and set the test `baseURL`
-   to the local address printed by Vite.
-4. Add a package script such as `"test:e2e": "playwright test"` and run
-   `npm run test:e2e`.
-
-The local app still needs a valid `CLOUDFLARE_HYPERDRIVE_ID` to start. Tests
-that call database endpoints also need a reachable database, the migrated
-schema, and imported data. Do not put credentials in test files.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local site |
+| `npm run build` | Build the Cloudflare Worker app |
+| `npm run start` | Preview a built app |
+| `npm run deploy` | Deploy to Cloudflare |
+| `npm run db:migrate` | Create database tables and indexes |
+| `npm run analysis:preview` | Validate curated comparison data without DB writes |
+| `npm run analysis:import` | Load curated BASS and SAFFIRE-V comparison rows |
+| `npm run data:preview` | Validate the PSI-26 NASA CSV without DB writes |
+| `npm run data:import` | Import PSI-26 BASS experiment records |
+| `npm run test:analysis` | Test grouped BASS validation and curated data loading |
+| `npm run test:insights` | Test simulation-summary validation and Gemini response parsing, without calling Gemini |
+| `npm run test:model` | Test the simulator model and flame simulation |
+| `npm run test:import` | Test the PSI-26 importer |
+| `npx tsc --noEmit` | Check TypeScript types |
 
 ## Project layout
 
 ```text
 nasaspaceapps26/
 ├── README.md
-├── astroflame/
-│   ├── app/
-│   │   ├── api/                 # Health check and read-only JSON endpoints
-│   │   ├── components/
-│   │   │   └── FlameSimulator.tsx
-│   │   ├── documentation/
-│   │   │   └── page.tsx         # Placeholder methodology page
-│   │   ├── globals.css          # Global styles
-│   │   ├── layout.tsx           # Shared navigation, footer, and metadata
-│   │   └── page.tsx             # Home page and blank Analysis section
-│   ├── db/
-│   │   └── schema.sql           # PostgreSQL and TimescaleDB schema
-│   ├── lib/
-│   │   ├── bass-model.ts        # BASS FSR equations and observed input ranges
-│   │   ├── flame-simulation.ts  # Material estimates and flame-map simulation
-│   │   ├── bass-model.test.mjs  # BASS model regression tests
-│   │   ├── flame-simulation.test.mjs
-│   │   └── database.ts          # Shared database and request helpers
-│   ├── scripts/
-│   │   ├── import-nasa-data.mjs # Download, validate, and import NASA CSVs
-│   │   ├── import-nasa-data.test.mjs
-│   │   └── migrate-db.mjs       # Apply the SQL schema
-│   ├── cloudflare.config.ts     # Worker and Hyperdrive binding
-│   ├── vite.config.ts           # vinext and Cloudflare Vite plugins
-│   ├── .env.example             # Local environment variable names
-│   └── package.json             # Dependencies and npm commands
-├── archive/
-│   └── misc/                    # Optional legacy Python NASA/R2 downloader
-└── elig-data/                   # Research data, model outputs, and references
+├── elig-data/
+│   └── astroflame_formatted_cgs.csv  # Curated BASS and SAFFIRE-V measurements
+└── astroflame/
+    ├── app/
+    │   ├── api/                      # Health, BASS analysis, and PSI-26 JSON APIs
+    │   ├── components/               # Simulator and comparison UI
+    │   ├── documentation/            # Documentation page
+    │   ├── globals.css
+    │   ├── layout.tsx                # Shared navigation and metadata
+    │   └── page.tsx                  # Home page
+    ├── db/schema.sql                 # PostgreSQL tables and indexes
+    ├── lib/                          # TypeScript model and validation logic
+    ├── scripts/                      # Data import and migration scripts
+    ├── cloudflare.config.ts          # Cloudflare Worker and Hyperdrive binding
+    ├── vite.config.ts                # Vite/vinext app configuration
+    └── package.json                  # Dependencies and commands
 ```
-
-## Troubleshooting
-
-- **`Set TIGER_DATABASE_URL`**: Make sure `.env` is in the `astroflame` folder
-  and contains TigerData's direct PostgreSQL connection string.
-- **Database login, SSL, or connection error**: Re-copy the connection
-  details, check that the database service is running, and use the exact
-  encoded password TigerData provided. If the database restricts incoming
-  connections, allow access from your local machine and Cloudflare Hyperdrive.
-- **`tsdb.hypertable` is unavailable**: Confirm that TimescaleDB is enabled for
-  the TigerData service before running the migration.
-- **`/api/health/db` returns `503`**: Check that the Hyperdrive ID and
-  credentials point to the right database, then confirm the schema migration
-  completed.
-- **NASA download or CSV validation fails**: The importer uses NASA's public
-  PSI API and stops if NASA is unavailable or a selected file has changed.
-  Retry later and review the reported error before importing.
-
-## Data sources and documentation
-
-- [NASA PSI investigation PSI-26](https://psi.nasa.gov/physci/repo/data/investigations/PSI-26)
-- [NASA PSI investigation PSI-100](https://psi.nasa.gov/physci/repo/data/investigations/PSI-100)
-- [Next.js App Router documentation](https://nextjs.org/docs/app)
-- [Vite documentation](https://vite.dev/guide/)
-- [Cloudflare Hyperdrive documentation](https://developers.cloudflare.com/hyperdrive/)
-- [Cloudflare Workers documentation](https://developers.cloudflare.com/workers/)
-- [TigerData documentation](https://docs.tigerdata.com/)
-- [Playwright documentation](https://playwright.dev/docs/intro)

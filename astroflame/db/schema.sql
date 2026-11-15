@@ -32,41 +32,52 @@ CREATE TABLE IF NOT EXISTS bass_experiments (
   PRIMARY KEY (source_file_id, source_row_number)
 );
 
-CREATE TABLE IF NOT EXISTS telemetry_measurements (
-  observed_at TIMESTAMPTZ NOT NULL,
-  investigation_id TEXT NOT NULL REFERENCES investigations(psi_id),
-  source_file_id BIGINT NOT NULL REFERENCES source_files(id),
+CREATE TABLE IF NOT EXISTS spread_rate_observations (
+  source_file_name TEXT NOT NULL,
   source_row_number INTEGER NOT NULL CHECK (source_row_number > 0),
-  channel TEXT NOT NULL,
-  value DOUBLE PRECISION NOT NULL,
-  unit TEXT,
-  relative_seconds DOUBLE PRECISION,
-  cygnus_timestamp_ms BIGINT NOT NULL,
-  saffire_timestamp TEXT,
-  PRIMARY KEY (
-    observed_at,
-    source_file_id,
-    source_row_number,
-    channel
-  )
-) WITH (
-  tsdb.hypertable,
-  tsdb.partition_column = 'observed_at',
-  tsdb.segmentby = 'channel',
-  tsdb.orderby = 'observed_at DESC'
+  project_regime TEXT NOT NULL CHECK (project_regime IN ('BASS', 'SAFFIRE-V')),
+  source_dataset TEXT NOT NULL,
+  experiment_id TEXT NOT NULL,
+  observation_id TEXT NOT NULL,
+  airflow_cm_s DOUBLE PRECISION,
+  thickness_cm DOUBLE PRECISION,
+  sample_width_cm DOUBLE PRECISION,
+  rib_width_cm DOUBLE PRECISION,
+  oxygen_percent DOUBLE PRECISION,
+  oxygen_initial_pct DOUBLE PRECISION,
+  oxygen_final_pct DOUBLE PRECISION,
+  fsr_cm_s DOUBLE PRECISION NOT NULL CHECK (fsr_cm_s > 0),
+  sample_length_cm DOUBLE PRECISION,
+  pressure_kpa DOUBLE PRECISION,
+  rib_height_mm DOUBLE PRECISION,
+  base_thickness_mm DOUBLE PRECISION,
+  material TEXT,
+  geometry TEXT,
+  flow_direction TEXT,
+  measurement_method TEXT,
+  data_quality TEXT,
+  source_location TEXT NOT NULL,
+  notes TEXT,
+  imported_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (source_file_name, source_row_number),
+  UNIQUE (project_regime, observation_id)
 );
 
-CREATE TABLE IF NOT EXISTS telemetry_import_rejections (
-  source_file_id BIGINT NOT NULL REFERENCES source_files(id),
-  source_row_number INTEGER NOT NULL CHECK (source_row_number > 0),
-  reason TEXT NOT NULL,
-  raw_row JSONB NOT NULL,
-  recorded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (source_file_id, source_row_number)
-);
+CREATE INDEX IF NOT EXISTS spread_rate_regime_conditions_idx
+  ON spread_rate_observations (
+    project_regime,
+    airflow_cm_s,
+    thickness_cm,
+    oxygen_initial_pct
+  );
 
-CREATE INDEX IF NOT EXISTS telemetry_investigation_time_idx
-  ON telemetry_measurements (investigation_id, observed_at DESC);
+ALTER TABLE spread_rate_observations
+  DROP CONSTRAINT IF EXISTS spread_rate_observations_project_regime_check;
 
-CREATE INDEX IF NOT EXISTS telemetry_channel_time_idx
-  ON telemetry_measurements (channel, observed_at DESC);
+UPDATE spread_rate_observations
+SET project_regime = 'SAFFIRE-V'
+WHERE project_regime = 'SAFFIRE-5';
+
+ALTER TABLE spread_rate_observations
+  ADD CONSTRAINT spread_rate_observations_project_regime_check
+  CHECK (project_regime IN ('BASS', 'SAFFIRE-V'));

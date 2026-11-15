@@ -38,7 +38,11 @@
 		"db:migrate": "node scripts/migrate-db.mjs",
 		"data:preview": "node scripts/import-nasa-data.mjs --dry-run",
 		"data:import": "node scripts/import-nasa-data.mjs",
+		"analysis:preview": "node --experimental-strip-types scripts/import-spread-rate-data.mjs --dry-run",
+		"analysis:import": "node --experimental-strip-types scripts/import-spread-rate-data.mjs",
 		"test:import": "node --test scripts/import-nasa-data.test.mjs",
+		"test:analysis": "node --experimental-strip-types --test scripts/import-spread-rate-data.test.mjs lib/bass-validation.test.mjs",
+		"test:insights": "node --experimental-strip-types --test lib/simulation-insights.test.mjs",
 		"test:model": "node --experimental-strip-types --test lib/bass-model.test.mjs lib/flame-simulation.test.mjs"
 	}
 }

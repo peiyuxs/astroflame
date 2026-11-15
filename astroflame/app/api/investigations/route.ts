@@ -6,6 +6,7 @@ export async function GET() {
       client.query(
         `SELECT psi_id, title, description, source_url, updated_at
          FROM investigations
+         WHERE psi_id = 'PSI-26'
          ORDER BY psi_id`,
       ),
     );
