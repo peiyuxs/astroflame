@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Astroflame | NASA Space Apps",
+  title: "AstroFlame",
   description:
-    "Explore NASA spacecraft-fire research data through the Astroflame API.",
+    "NASA Space Apps 2026 @ NYC Hackathon Entry.",
   icons: {
     icon: "/favicon.png",
   },
