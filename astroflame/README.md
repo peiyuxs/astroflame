@@ -12,6 +12,14 @@ Browser
   -> Cloudflare Hyperdrive (secure, pooled database connection)
   -> TigerData PostgreSQL (searchable records and measurements)
 
+## Check the TigerData connection
+
+The `/api/health/db` endpoint runs a read-only `SELECT 1` query through the
+Worker's `HYPERDRIVE` binding. After deploying, open
+`https://<your-site>/api/health/db`. A successful response is
+`{"status":"ok","database":"connected"}`. The endpoint does not expose database
+credentials.
+
 NASA PSI public API
   -> local import script
   -> TigerData PostgreSQL

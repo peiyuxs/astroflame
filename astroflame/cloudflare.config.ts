@@ -1,9 +1,11 @@
 import "dotenv/config";
 import { bindings, defineConfig, defineWorker } from "cf/config";
 
-const hyperdriveId =
-  process.env.CLOUDFLARE_HYPERDRIVE_ID?.trim() ||
-  "replace-with-your-hyperdrive-id";
+const hyperdriveId = process.env.CLOUDFLARE_HYPERDRIVE_ID?.trim();
+if (!hyperdriveId) {
+  throw new Error("Set CLOUDFLARE_HYPERDRIVE_ID in astroflame/.env.");
+}
+
 const localDatabaseUrl = process.env.TIGER_DATABASE_URL?.trim();
 
 export default defineConfig({
