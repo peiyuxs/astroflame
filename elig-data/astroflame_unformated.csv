@@ -1,0 +1,44 @@
+test_id,segment_number,airflow_cm_s,spread_rate_mm_s,spread_rate_cm_s,oxygen_segment_pct,segment_start_s,segment_end_s,source_x,material,geometry,flow_direction,thickness_mm,width_cm,burning_sides,burn_duration_min,oxygen_initial_pct,oxygen_final_pct,source_y,Sample #,Fuel Sample Material,PI,Date,GMT
+M1,1,9,0.071,0.0070999999999999995,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,2.2,1,6.4,22.2,21.9,NASA/TM-20210011385 Table 5.1 p.57,222,1 mm thick PMMA   1 sided   2 cm,Miller,2/20/2014,51
+M2,1,20,0.052,0.0052,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,3,2.2,1,22.9,22.2,21.2,NASA/TM-20210011385 Table 5.1 p.57,224,3 mm thick PMMA 1 sided    2 cm wide,Miller,2/20/2014,51
+M2,2,15,0.033,0.0033,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,3,2.2,1,22.9,22.2,21.2,NASA/TM-20210011385 Table 5.1 p.57,224,3 mm thick PMMA 1 sided    2 cm wide,Miller,2/20/2014,51
+M3,1,10,0.029,0.0029000000000000002,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,2.2,1,20.1,20.8,19.7,NASA/TM-20210011385 Table 5.1 p.57,226m,2 cm wide   5 mm thick 1 sided PMMA,Miller,7/11/2014,192
+M3,2,20,0.024,0.0024000000000000002,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,2.2,1,20.1,20.8,19.7,NASA/TM-20210011385 Table 5.1 p.57,226m,2 cm wide   5 mm thick 1 sided PMMA,Miller,7/11/2014,192
+M4,1,5,0.045,0.0045,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,2.2,2,19.8,21.8,19.8,NASA/TM-20210011385 Table 5.1 p.57,171m,5 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M4,2,3,0.033,0.0033,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,2.2,2,19.8,21.8,19.8,NASA/TM-20210011385 Table 5.1 p.57,171m,5 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M5,1,10,0.071,0.0070999999999999995,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,3,2.2,2,27.2,22.2,19.0,NASA/TM-20210011385 Table 5.1 p.57,167,3 mm thick PMMA   2 sided   2 cm thick,Miller,2/20/2014,51
+M6,1,10,,,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,2.2,2,16.8,21.8,20.7,NASA/TM-20210011385 Table 5.1 p.57,163m,1 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M6,2,8,,,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,2.2,2,16.8,21.8,20.7,NASA/TM-20210011385 Table 5.1 p.57,163m,1 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M7,1,10,0.106,0.0106,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,1.2,2,18.4,18.9,18.4,NASA/TM-20210011385 Table 5.1 p.57,177m,1 cm wide PMMA 1 mm thick,Miller,7/11/2014,192
+M7,2,6,0.099,0.0099,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,1.2,2,18.4,18.9,18.4,NASA/TM-20210011385 Table 5.1 p.57,177m,1 cm wide PMMA 1 mm thick,Miller,7/11/2014,192
+M7,3,5,0.083,0.0083,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,1.2,2,18.4,18.9,18.4,NASA/TM-20210011385 Table 5.1 p.57,177m,1 cm wide PMMA 1 mm thick,Miller,7/11/2014,192
+M7,4,3,0.07,0.007000000000000001,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,1.2,2,18.4,18.9,18.4,NASA/TM-20210011385 Table 5.1 p.57,177m,1 cm wide PMMA 1 mm thick,Miller,7/11/2014,192
+M8,1,10,0.057,0.0057,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,1.2,2,25.2,19.1,18.2,NASA/TM-20210011385 Table 5.1 p.57,178m,1 cm wide PMMA 2 mm thick,Miller,7/11/2014,192
+M8,2,6,0.056,0.0056,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,1.2,2,25.2,19.1,18.2,NASA/TM-20210011385 Table 5.1 p.57,178m,1 cm wide PMMA 2 mm thick,Miller,7/11/2014,192
+M8,3,5,0.04,0.004,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,1.2,2,25.2,19.1,18.2,NASA/TM-20210011385 Table 5.1 p.57,178m,1 cm wide PMMA 2 mm thick,Miller,7/11/2014,192
+M9,1,14,0.025,0.0025,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,3,1.2,2,16.8,18.0,17.6,NASA/TM-20210011385 Table 5.1 p.57,179m,1 cm wide PMMA 3 mm thick,Miller,7/11/2014,192
+M10,1,15,0.0373,0.00373,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,1.2,2,30.5,20.1,18.6,NASA/TM-20210011385 Table 5.1 p.57,180m,4 mm thick   1 cm wide PMMA slab,Miller,7/23/2014,204
+M10,2,10,0.03,0.003,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,1.2,2,30.5,20.1,18.6,NASA/TM-20210011385 Table 5.1 p.57,180m,4 mm thick   1 cm wide PMMA slab,Miller,7/23/2014,204
+M11,1,21,0.048,0.0048000000000000004,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,1.2,2,28.5,20.0,18.5,NASA/TM-20210011385 Table 5.1 p.57,181m,1 cm wide PMMA 5 mm thick,Miller,7/11/2014,192
+M11,2,15,0.028,0.0028,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,1.2,2,28.5,20.0,18.5,NASA/TM-20210011385 Table 5.1 p.57,181m,1 cm wide PMMA 5 mm thick,Miller,7/11/2014,192
+M11,3,13,0.022,0.0021999999999999997,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,1.2,2,28.5,20.0,18.5,NASA/TM-20210011385 Table 5.1 p.57,181m,1 cm wide PMMA 5 mm thick,Miller,7/11/2014,192
+M12,1,12,,,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,2,16.2,21.7,20.4,NASA/TM-20210011385 Table 5.1 p.57,165m,2 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M12,2,10,,,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,2,16.2,21.7,20.4,NASA/TM-20210011385 Table 5.1 p.57,165m,2 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M13,1,6,0.047,0.0047,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,2.2,2,20.5,20.8,19.0,NASA/TM-20210011385 Table 5.1 p.57,169m,4 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M13,2,5,0.035,0.0035000000000000005,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,2.2,2,20.5,20.8,19.0,NASA/TM-20210011385 Table 5.1 p.57,169m,4 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M13,3,4,0.033,0.0033,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,2.2,2,20.5,20.8,19.0,NASA/TM-20210011385 Table 5.1 p.57,169m,4 mm thick PMMA   2 cm wide,Miller,7/31/2014,212
+M14,1,15,0.0624,0.00624,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,1,15.4,22.2,21.6,NASA/TM-20210011385 Table 5.1 p.57,223,2mm thick PMMA   1 sided   2 cm wide,Miller,2/20/2014,51
+M14,2,14,0.055,0.0055,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,1,15.4,22.2,21.6,NASA/TM-20210011385 Table 5.1 p.57,223,2mm thick PMMA   1 sided   2 cm wide,Miller,2/20/2014,51
+M14,3,10,0.0353,0.0035299999999999997,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,1,15.4,22.2,21.6,NASA/TM-20210011385 Table 5.1 p.57,223,2mm thick PMMA   1 sided   2 cm wide,Miller,2/20/2014,51
+M15,1,20,0.045,0.0045,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,2.2,1,22.0,21.0,20.0,NASA/TM-20210011385 Table 5.1 p.57,225m,2 cm   4 mm 1 sided PMMA slab,Miller,7/7/2014,188
+M16,1,5,0.144,0.0144,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,2.2,2,8.4,19.2,18.7,NASA/TM-20210011385 Table 5.1 p.57,164m,1 mm thick PMMA   2 cm wide,Miller,7/23/2014,204
+M16,2,3,0.1309,0.01309,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,2.2,2,8.4,19.2,18.7,NASA/TM-20210011385 Table 5.1 p.57,164m,1 mm thick PMMA   2 cm wide,Miller,7/23/2014,204
+M16,3,2,0.1062,0.010620000000000001,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,1,2.2,2,8.4,19.2,18.7,NASA/TM-20210011385 Table 5.1 p.57,164m,1 mm thick PMMA   2 cm wide,Miller,7/23/2014,204
+M17,1,5,0.053,0.0053,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,2,30.7,18.8,17.1,NASA/TM-20210011385 Table 5.1 p.57,166m,2 cm wide PMMA 2 mm thick,Miller,7/15/2014,196
+M17,2,4,0.042,0.004200000000000001,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,2,30.7,18.8,17.1,NASA/TM-20210011385 Table 5.1 p.57,166m,2 cm wide PMMA 2 mm thick,Miller,7/15/2014,196
+M17,3,3,0.026,0.0026,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,2,2.2,2,30.7,18.8,17.1,NASA/TM-20210011385 Table 5.1 p.57,166m,2 cm wide PMMA 2 mm thick,Miller,7/15/2014,196
+M18,1,10,0.026,0.0026,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,3,2.2,2,25.5,17.9,16.8,NASA/TM-20210011385 Table 5.1 p.57,168m,2 cm wide PMMA 3 mm thick,Miller,7/15/2014,196
+M18,2,8,0.013,0.0013,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,3,2.2,2,25.5,17.9,16.8,NASA/TM-20210011385 Table 5.1 p.57,168m,2 cm wide PMMA 3 mm thick,Miller,7/15/2014,196
+M19,1,10,0.027,0.0027,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,2.2,2,25.7,19.0,17.4,NASA/TM-20210011385 Table 5.1 p.57,170m,4 mm thick   2 cm 2ide PMMA slab,Miller,7/23/2014,204
+M19,2,6,0.0159,0.00159,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,4,2.2,2,25.7,19.0,17.4,NASA/TM-20210011385 Table 5.1 p.57,170m,4 mm thick   2 cm 2ide PMMA slab,Miller,7/23/2014,204
+M20,1,10,0.012,0.0012000000000000001,,,,NASA/TM-20210011385 Table 5.1 p.57,PMMA,flat slab,opposed,5,2.2,2,16.5,18.0,17.4,NASA/TM-20210011385 Table 5.1 p.57,172m,5 mm thick PMMA   2 cm wide,Miller,8/1/2014,213
