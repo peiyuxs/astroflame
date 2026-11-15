@@ -5,12 +5,9 @@
 	"packageManager": "npm",
 	"dependencies": {
 		"@vinext/cloudflare": "latest",
-<<<<<<< Updated upstream
-=======
 		"csv-parse": "^7.0.3",
 		"dotenv": "^18.0.10",
 		"pg": "^8.23.1",
->>>>>>> Stashed changes
 		"react": "latest",
 		"react-dom": "latest",
 		"react-server-dom-webpack": "latest",
@@ -20,6 +17,7 @@
 		"@cloudflare/vite-plugin": "beta",
 		"@tailwindcss/postcss": "latest",
 		"@types/node": "latest",
+		"@types/pg": "^8.23.1",
 		"@types/react": "latest",
 		"@types/react-dom": "latest",
 		"@vitejs/plugin-react": "latest",
