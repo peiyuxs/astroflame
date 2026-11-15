@@ -576,7 +576,7 @@ export default function FlameSimulator() {
                   </span>
                 </label>
                 <div className="material-evidence">
-                  <strong>3 cm rib height · 1 cm base thickness</strong>
+                  <strong>0.3 cm rib height · 1 cm base thickness</strong>
                   <span>40 × 20 cm specimen · 800 cm² planform</span>
                   <span>26.9% oxygen · 76.1 kPa reported pressure</span>
                   <span>
@@ -644,7 +644,7 @@ export default function FlameSimulator() {
                 <>
                   <span>Material / flow: structured ribbed PMMA / opposed flow</span>
                   <span>Surface geometry: 40 × 20 cm · thickness 1 cm</span>
-                  <span>Rib height 3 cm · width {settings.ribWidthCm.toFixed(1)} cm</span>
+                  <span>Rib height 0.3 cm · width {settings.ribWidthCm.toFixed(1)} cm</span>
                   <span>Pressure 76.1 kPa · oxygen 26.9%</span>
                   <span>Planform: 800 cm² · airflow {settings.airflowCmS} cm/s</span>
                 </>
@@ -756,7 +756,12 @@ export default function FlameSimulator() {
             <div className="map-view">
               <div className="map-title-row">
                 <h3>Fuel surface · {geometry.lengthCm} × {geometry.widthCm} cm</h3>
-                <p>Airflow → right; opposed spread ← left</p>
+                <p className="directional-spread-label">
+                  <strong className="airflow-direction">Airflow →</strong>
+                  <span className="flame-spread-direction">
+                    Flame Spread ←
+                  </span>
+                </p>
               </div>
               <FireMap
                 cells={simulation.cells}
@@ -765,11 +770,6 @@ export default function FlameSimulator() {
                 onSelectIgnition={chooseIgnitionPoint}
                 selectable={simulation.status !== "running"}
               />
-              <div className="fire-legend" aria-label="Flame map legend">
-                <span><i className="legend-burned" /> Burned</span>
-                <span><i className="legend-unburned" /> Unburned</span>
-                <span><i className="legend-burning" /> Active front</span>
-              </div>
             </div>
             <div className="chart-view">
               <div className="map-title-row">

@@ -1468,6 +1468,21 @@ a:focus-visible {
   font-size: 0.68rem;
 }
 
+.map-title-row .directional-spread-label {
+  margin-left: auto;
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.directional-spread-label .airflow-direction {
+  color: #9c42b1;
+}
+
+.directional-spread-label .flame-spread-direction {
+  margin-left: 0.5em;
+  color: #0246cf;
+}
+
 .fire-map-figure {
   display: flex;
   min-width: 0;
@@ -1756,6 +1771,10 @@ a:focus-visible {
     white-space: nowrap;
   }
 
+  .map-title-row .directional-spread-label {
+    font-size: 0.65rem;
+  }
+
   .fire-map-figure {
     padding: 2px;
   }
@@ -1764,16 +1783,6 @@ a:focus-visible {
     margin-top: 1px;
     font-size: 0.52rem;
     line-height: 1;
-  }
-
-  .fire-legend {
-    gap: 4px 6px;
-    font-size: 0.55rem;
-  }
-
-  .fire-legend i {
-    width: 7px;
-    height: 7px;
   }
 
   .simulation-acceleration-note {
