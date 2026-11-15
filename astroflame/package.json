@@ -5,6 +5,7 @@
 	"packageManager": "npm",
 	"dependencies": {
 		"@vinext/cloudflare": "latest",
+		"pg": "^8.23.1",
 		"react": "latest",
 		"react-dom": "latest",
 		"react-server-dom-webpack": "latest",
@@ -14,6 +15,7 @@
 		"@cloudflare/vite-plugin": "beta",
 		"@tailwindcss/postcss": "latest",
 		"@types/node": "latest",
+		"@types/pg": "^8.23.1",
 		"@types/react": "latest",
 		"@types/react-dom": "latest",
 		"@vitejs/plugin-react": "latest",
