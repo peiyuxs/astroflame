@@ -1,0 +1,72 @@
+BASS FLAME-SPREAD RATE MODEL RESULTS
+
+Dataset and validation
+----------------------
+Response: observation-level flame-spread rate (FSR), in cm/s.
+Data: 39 BASS observations across 18 experiment IDs.
+Validation: leave one complete experiment ID out at a time.
+Model selection metric: equal-ID-weighted RMSE, so IDs with more rows do not dominate.
+
+The supplied data has 13 experiment IDs with multiple observations (34 rows total).
+Repeated IDs are treated as possible relight groups based on the user's description;
+the data does not identify which exact observation followed a relight.
+
+Recommended model with initial oxygen
+-------------------------------------
+FSR (cm/s) =
+    -0.0047724994
+    + 0.0001178348 * thickness_cm^(-1.8194)
+    + 0.00036659067 * oxygen_initial_pct
+
+Grouped cross-validation:
+    Equal-ID-weighted RMSE: 0.0020768 cm/s
+    Row-weighted RMSE:      0.0020020 cm/s
+
+Thickness-only benchmark:
+    Equal-ID-weighted RMSE: 0.0020298 cm/s
+
+The initial-oxygen model was selected to include the requested input, but its
+equal-ID validation error was slightly higher than the thickness-only benchmark.
+Treat the added predictive value of initial oxygen as uncertain.
+
+Second model including airflow
+------------------------------
+FSR (cm/s) =
+    -0.0046401565
+    + 0.00012822354 * thickness_cm^(-1.7904)
+    + 0.000020195711 * airflow_cm_s
+    + 0.00034705712 * oxygen_initial_pct
+
+Grouped cross-validation:
+    Equal-ID-weighted RMSE: 0.0021106 cm/s
+    Row-weighted RMSE:      0.0020374 cm/s
+
+Adding airflow did not improve equal-ID validation error compared with the
+initial-oxygen model without airflow (0.0020768 cm/s). The airflow model is
+available for comparison, not because it performed better.
+
+Observed input ranges
+---------------------
+Thickness:       0.1 to 0.5 cm
+Initial oxygen: 17.9 to 22.2 percent
+Airflow:         2 to 21 cm/s
+
+Oxygen interpretation
+---------------------
+oxygen_initial_pct is an input to both equations.
+oxygen_drop_pp = oxygen_initial_pct - oxygen_final_pct is an outcome/diagnostic,
+not a predictor input. The observed oxygen-drop range was 0.3 to 3.2 percentage
+points. Final oxygen is measured after the burn and may not physically represent
+a relit segment, so it is excluded from prediction.
+
+Use limits
+----------
+These fits are exploratory associations, not causal models. Do not extrapolate
+beyond the observed input ranges. There are only 18 experiment IDs, so validation
+uncertainty remains substantial.
+
+Generated charts
+----------------
+bass_fsr_geometry_oxygen.png
+bass_fsr_grouped_cv_model_comparison.png
+bass_fsr_cross_validated_predictions.png
