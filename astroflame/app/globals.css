@@ -85,13 +85,19 @@ a:focus-visible {
 }
 
 .brand-link {
+  position: relative;
   display: block;
   flex: 0 0 auto;
   width: clamp(100px, 18vw, 220px);
+  aspect-ratio: 4 / 1;
+  overflow: hidden;
   animation: fade-up 700ms ease-out both;
 }
 
 .nav-wordmark {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
   width: 100%;
   height: auto;
