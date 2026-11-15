@@ -39,6 +39,20 @@ test("rejects invalid BASS dates instead of silently importing them", () => {
   );
 });
 
+test("normalizes the NASA two-digit year format", () => {
+  const mapped = mapBassRow(
+    {
+      Date: "6/29/'12",
+      "As Run Test #": "42",
+      "Test #": "35",
+      "Sample #": "16",
+    },
+    42,
+  );
+
+  assert.equal(mapped.experimentDate, "2012-06-29");
+});
+
 test("normalizes the malformed two-digit BASS year", () => {
   const mapped = mapBassRow(
     {

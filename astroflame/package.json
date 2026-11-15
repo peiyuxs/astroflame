@@ -5,6 +5,8 @@
 	"packageManager": "npm",
 	"dependencies": {
 		"@vinext/cloudflare": "latest",
+		"csv-parse": "^7.0.3",
+		"dotenv": "^18.0.10",
 		"pg": "^8.23.1",
 		"react": "latest",
 		"react-dom": "latest",
@@ -21,8 +23,6 @@
 		"@vitejs/plugin-react": "latest",
 		"@vitejs/plugin-rsc": "latest",
 		"cf": "^1.0.0-beta.32",
-		"csv-parse": "^7.0.3",
-		"dotenv": "^18.0.10",
 		"tailwindcss": "latest",
 		"typescript": "latest",
 		"vite": "8.3.0"
