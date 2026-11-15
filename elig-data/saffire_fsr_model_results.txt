@@ -1,0 +1,15 @@
+SAFFIRE-V exploratory fire-spread analysis
+Observations: 18; experiment IDs: 1
+Sample dimensions (cm): 40 x 20 x 1
+Planform area: 800 cm^2
+Envelope volume: 800 cm^3
+Fixed predictors: thickness_cm, oxygen_initial_pct
+Lowest within-burn leave-one-out RMSE model: Airflow plus linear and quadratic rib width (0.0130686 cm/s).
+Row-wise LOO is not independent experiment-level validation; only one Saffire experiment is available.
+BASS values are contextual only; transferring BASS coefficients/predictions to Saffire is unvalidated.
+
+                                      model                                      predictors  rank  training_R2  training_RMSE_cm_s  LOO_RMSE_cm_s                                                                                                           equation
+                               Airflow only                                    airflow_cm_s     2     0.366386            0.015111       0.016798                                                                     FSR = 0.00226667 + (0.00154167 * airflow_cm_s)
+                     Airflow plus rib width                      airflow_cm_s, rib_width_cm     3     0.628004            0.011579       0.014850                                         FSR = 0.023055 + (0.00145505 * airflow_cm_s) + (-0.0346472 * rib_width_cm)
+     Airflow plus rib width and interaction airflow_cm_s, rib_width_cm, airflow_x_rib_width     4     0.755640            0.009384       0.013317 FSR = -0.00313333 + (0.00332667 * airflow_cm_s) + (0.0103636 * rib_width_cm) + (-0.00327273 * airflow_x_rib_width)
+Airflow plus linear and quadratic rib width   airflow_cm_s, rib_width_cm, rib_width_squared     4     0.818444            0.008089       0.013069        FSR = 0.0542801 + (0.00138048 * airflow_cm_s) + (-0.173529 * rib_width_cm) + (0.121172 * rib_width_squared)

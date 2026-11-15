@@ -1,0 +1,318 @@
+FIRE-SPREAD SIMULATION REFERENCE
+BASS-II, SAFFIRE-V, AND COMBINED MODELS
+
+Purpose
+=======
+This document summarizes the current source data, fitted equations, validation
+results, expected-use ranges, and failure cases for building a fire-spread-rate
+(FSR) simulation. Treat the models as exploratory estimates, not validated
+physical laws. All FSR values and equations below use cm/s.
+
+Short conclusion
+================
+1. The BASS equations are the best-supported for BASS-like conditions: 39
+   observations across 18 experiment IDs. Grouped validation is possible, but
+   the oxygen and airflow additions did not beat the thickness-only benchmark.
+2. The Saffire data have only 18 approximate observations from one experiment.
+   The best tested within-burn fit includes airflow, rib width, and rib width
+   squared. Its leave-one-observation-out score is not independent validation.
+3. The combined positive log-linear model is useful as a single exploratory
+   equation, but its held-out Saffire experiment error is 0.02874 cm/s. When
+   Saffire is held out, training has no positive rib widths and cannot learn a
+   rib-width effect. Do not treat the combined equation as validated for new
+   Saffire burns.
+4. The valid input regions are two separate source-like regimes, not one
+   continuous box. Do not mix BASS thickness/oxygen with Saffire rib widths
+   and assume the result is supported.
+
+1. Data and units
+=================
+Shared response and inputs:
+  FSR: cm/s
+  Airflow speed: cm/s
+  Thickness: cm
+  Rib width: cm
+  Oxygen: percent values such as 21.0, not fractions such as 0.21
+
+The combined model uses initial oxygen (`oxygen_initial_pct`, normalized to
+`oxygen_percent`). Final oxygen and oxygen drop are diagnostics, not predictor
+inputs. Do not use post-burn oxygen as an input to a forward prediction.
+
+BASS-II PSI-25
+--------------
+  Observations: 39
+  Experiment IDs: 18; 13 IDs have multiple observations (34 rows)
+  Material/geometry/flow: PMMA / flat slab / opposed flow
+  Measurement method: reported table
+  Sample width: 1.2 or 2.2 cm
+  Sample length: not recorded per row; the BASS analysis assumes 10 cm
+  Planform area from that assumption: 12 or 22 cm^2
+  Thickness: 0.1 to 0.5 cm; observed levels 0.1, 0.2, 0.3, 0.4, 0.5
+  Initial oxygen: 17.9 to 22.2%; observed levels
+    17.9, 18.0, 18.8, 18.9, 19.0, 19.1, 19.2, 20.0, 20.1, 20.8, 21.0,
+    21.8, 22.2
+  Airflow: 2 to 21 cm/s; observed levels
+    2, 3, 4, 5, 6, 8, 9, 10, 13, 14, 15, 20, 21
+  Rib width: not reported; the combined dataset codes it as 0 cm with
+    `rib_width_applicable=False`. This is N/A, not a physical measurement.
+  Observed FSR: 0.0012 to 0.0144 cm/s
+  Oxygen drop (initial minus final): 0.3 to 3.2 percentage points
+  Oxygen caveat: segment oxygen is unknown; the source notes that test-level
+    oxygen is not segment oxygen. Final oxygen may not represent a relit
+    segment.
+
+SAFFIRE-V (SAFFIRE-5)
+--------------------
+  Observations: 18
+  Experiment IDs: 1
+  Material/geometry/flow: structured PMMA / structured ribbed slab / opposed
+  Pressure reported: 76.1 kPa
+  Sample dimensions: width 40 cm, length 20 cm, thickness 1 cm
+  Outer planform footprint: 800 cm^2
+  Rectangular envelope volume: 800 cm^3; this does not include rib surface area
+  Airflow: 5 or 20 cm/s only
+  Initial oxygen: 26.9% only
+  Rib width: 0.1 to 1.0 cm, in 0.1 cm increments
+  Observed FSR: 0.0065 to 0.088 cm/s
+  Measurement/data quality: FSR values are approximate visual digitizations
+    from a plot; verify with WebPlotDigitizer before final analysis. Notes flag
+    ribs 7-10 as potentially affected by local flow disturbance. Rows share
+    one burn/test context and are not independent experiment replicates.
+
+Scale comparison:
+  BASS planform areas are 12-22 cm^2 using the assumed 10 cm length.
+  SAFFIRE-V planform area is 800 cm^2. The area difference is confounded with
+  source, geometry, and measurement method. Area is retained as context, not
+  estimated as an independent combined-model effect. Do not scale FSR by area
+  without a separate validated physical model.
+
+2. BASS model results
+=====================
+Validation: leave one complete experiment ID out at a time. Selection metric
+is equal-ID-weighted RMSE so that IDs with more rows do not dominate.
+
+Candidate model comparison (cm/s; lower RMSE is better):
+  Model                                             Equal-ID RMSE  Row RMSE
+  Power: thickness only                              0.0020298     0.0020106
+  Power: thickness + initial oxygen                  0.0020768     0.0020020
+  Power: thickness + airflow                         0.0020825     0.0020595
+  Power: thickness + airflow + initial oxygen        0.0021106     0.0020374
+  Power: thickness + area + airflow + initial oxygen 0.0022851     0.0022615
+  Power: thickness + airflow + oxygen + relight flag 0.0023746     0.0021828
+  Quadratic: thickness + area + airflow + oxygen    0.0023931     0.0023803
+
+Recommended BASS equation when initial oxygen is required:
+
+  FSR = -0.0047724994
+        + 0.0001178348 * thickness_cm^(-1.8194)
+        + 0.00036659067 * oxygen_initial_pct
+
+  Equal-ID CV RMSE: 0.0020768 cm/s
+  Row-weighted CV RMSE: 0.0020020 cm/s
+
+Important comparison: the thickness-only benchmark has a slightly lower
+equal-ID RMSE (0.0020298 cm/s). Adding oxygen was a modeling requirement, not a
+measured validation improvement. Added airflow also did not improve validation.
+
+Available BASS airflow equation (comparison model, not the selected one):
+
+  FSR = -0.0046401565
+        + 0.00012822354 * thickness_cm^(-1.7904)
+        + 0.000020195711 * airflow_cm_s
+        + 0.00034705712 * oxygen_initial_pct
+
+  Equal-ID CV RMSE: 0.0021106 cm/s
+  Row-weighted CV RMSE: 0.0020374 cm/s
+
+Other BASS descriptive results (experiment means; exploratory, not the
+observation-level predictor):
+  Mean FSR = 0.009217 - 0.01443 * thickness_cm
+    Pearson r=-0.7291; Spearman rho=-0.7179; R^2=0.5316; n=18 experiments
+  Mean FSR = 0.004619 + 0.000001405 * surface_area_cm2
+    Pearson r=0.002296; Spearman rho=-0.01196; R^2=0.000005274
+  Mean FSR = -0.002771 + 0.0003686 * oxygen_initial_pct
+    Pearson r=0.2058; Spearman rho=0.4946; R^2=0.04235
+  Two-factor experiment-mean equation:
+    Mean FSR = 0.008573 + 0.00003491 * surface_area_cm2
+               - 0.01452 * thickness_cm
+    R^2=0.535; n=18 experiments
+  Within-experiment airflow association:
+    Pearson r=0.679; Spearman rho=0.770; slope=0.0002913 cm/s FSR per
+    cm/s airflow; 34 segments across 13 repeated experiment IDs.
+
+Do not treat these correlations as causal. Repeated IDs were treated as
+possible relight groups based on description; the data does not mark which row
+followed a relight. The relight flag did not improve grouped validation.
+
+3. Saffire model results
+========================
+Thickness is fixed at 1.0 cm and initial oxygen is fixed at 26.9%, so the data
+cannot estimate their independent coefficients. The full requested model
+(airflow, thickness, oxygen, rib width, plus intercept) has rank 3 of 5.
+Thickness and oxygen are documented input conditions, not estimated Saffire
+effects.
+
+Tested airflow/rib-width regressions:
+  Model                                      Train R^2  Train RMSE  Row-LOO RMSE
+  Airflow only                                0.366386   0.015111    0.016798
+  Airflow + rib width                         0.628004   0.011579    0.014850
+  Airflow + rib + airflow*rib interaction     0.755640   0.009384    0.013317
+  Airflow + rib + rib^2                       0.818444   0.008089    0.013069
+
+Lowest row-wise leave-one-observation-out RMSE among these candidates:
+
+  FSR = 0.0542801
+        + 0.00138048 * airflow_cm_s
+        - 0.173529 * rib_width_cm
+        + 0.121172 * rib_width_cm^2
+
+  Row-wise LOO RMSE: 0.0130686 cm/s
+
+The quadratic term improves the within-burn point fit over airflow plus rib
+width (LOO RMSE 0.0148502 cm/s), but this comparison holds out rows from the
+same burn. It does not show performance on a new Saffire experiment. Thickness
+and oxygen are absent from this equation because they are constant in Saffire.
+Do not use this equation to infer their effects.
+
+4. Combined model and transfer check
+====================================
+The combined dataset contains 57 raw observations: 39 BASS and 18 SAFFIRE-V.
+It combines observations, not fitted predictions. BASS rib width is set to
+zero as N/A and marked `rib_width_applicable=False`; all Saffire rib widths are
+positive measurements.
+
+Candidate combined models were selected using leave-one-experiment-out
+validation and equal-experiment RMSE. The best tested model is a log-linear
+regression with quadratic rib width. The exponential form keeps predicted FSR
+positive. The smearing factor converts the log-scale fit back to an
+approximation of mean FSR.
+
+  FSR = 1.208128 * exp(
+          -10.33439
+          + 0.02541979 * airflow_cm_s
+          - 1.858148 * thickness_cm
+          + 3.430389 * rib_width_cm
+          + 0.2620281 * oxygen_percent
+          - 3.227269 * rib_width_cm^2
+        )
+
+Combined model comparison:
+  Model                                  Equal-ID CV  Row CV   Saffire holdout
+  Raw-scale four-input linear             0.011279    0.020011   0.032910
+  Log-linear four-input                   0.008628    0.016907   0.028741
+  Raw linear + quadratic rib width        0.011489    0.020119   0.032910
+  Log-linear + quadratic rib width        0.008293    0.016777   0.028741
+  All error values are RMSE in cm/s.
+
+Selected model training RMSE: 0.0112742 cm/s; training R^2=0.326245.
+Selected model equal-experiment CV RMSE: 0.0082933 cm/s.
+Held-out Saffire experiment RMSE: 0.0287406 cm/s.
+
+Transfer failure to note: when the single Saffire experiment is held out, the
+training fold contains only BASS rows. BASS has no positive rib widths, making
+the rib-width terms unidentifiable in that fold (minimum fold rank 4 of 6).
+The held-out Saffire CV estimates are approximately 0.00123-0.00128 cm/s,
+while observed Saffire FSR is 0.0065-0.088 cm/s. This is evidence that BASS
+alone does not supply a validated ribbed-Saffire prediction. The combined
+model's full-data rib coefficients are driven by the one approximate Saffire
+experiment and may not transfer to future burns.
+
+5. Recommended simulation input limits
+=======================================
+The input guard in `combine_data_equations.ipynb` separates two regimes:
+
+BASS-like (flat, non-ribbed; rib width 0 means N/A):
+  airflow_cm_s:       2 to 21
+  thickness_cm:       0.1 to 0.5
+  rib_width_cm:       exactly 0 (N/A code only)
+  oxygen_percent:     17.9 to 22.2
+
+SAFFIRE-V-like (structured/ribbed):
+  airflow_cm_s:       5 to 20; only 5 and 20 were measured
+  thickness_cm:       exactly 1.0 in the available data
+  rib_width_cm:       0.1 to 1.0
+  oxygen_percent:     exactly 26.9 in the available data
+
+These are empirical boundaries, not guaranteed safe or physical operating
+limits. Values between observed airflow settings are interpolations.
+Especially unsupported are:
+  - thickness between 0.5 and 1.0 cm;
+  - oxygen between 22.2% and 26.9%;
+  - rib widths between 0 and 0.1 cm;
+  - ribbed BASS conditions or non-ribbed Saffire-like conditions;
+  - any input outside the bounds above;
+  - combinations inside the global min/max box that do not match either
+    source-like regime (for example 0.7 cm thickness, 24% oxygen, and a
+    0.5 cm rib).
+
+The notebook raises an error for non-finite inputs, non-positive thickness,
+negative rib width, unsupported source-regime combinations, and invalid
+predictions. For use in another simulator, preserve these checks rather than
+silently clamping or extrapolating. The model does not estimate ignition,
+extinction, burn duration, flame size, or probability of spread. Positive FSR
+is not an ignition threshold.
+
+6. Successes, failures, and limitations
+========================================
+Successes:
+  - BASS has enough distinct experiment IDs for grouped validation.
+  - The combined log model yields positive fitted FSR values and marginally
+    improves equal-experiment CV error over the tested alternatives.
+  - The combined CSV preserves source/experiment IDs and marks BASS rib width
+    as N/A instead of pretending it was measured as zero.
+  - The analysis explicitly separates source-like prediction ranges and
+    reports the held-out Saffire transfer error.
+
+Failures/limitations:
+  - BASS oxygen did not improve equal-ID validation over thickness alone;
+    airflow did not improve it further.
+  - Saffire has one experiment, fixed thickness/oxygen, two airflow settings,
+    approximate plot-digitized outcomes, and possible flow disturbance at
+    ribs 7-10. No independent Saffire validation or reliable significance
+    test is available.
+  - BASS rib width is missing. Coding it as zero makes a unified model
+    computable but does not teach a rib effect from BASS.
+  - Saffire's geometry and physical scale differ sharply from BASS. BASS
+    thickness (0.1-0.5 cm) and oxygen (17.9-22.2%) do not cover Saffire's
+    1.0 cm and 26.9%. Transfer is extrapolation in those dimensions.
+  - BASS pressure is not reported; Saffire pressure is 76.1 kPa. Material
+    labels, geometry, environment, and measurement resolution may also differ.
+  - Planform area is not in the combined equation because scale is confounded
+    with source/geometry and BASS length is an assumption. More matched tests
+    are needed to estimate size and geometry effects separately.
+  - The combined pooled model's cross-validation score is not a guarantee of
+    Saffire performance; the Saffire-only holdout is the more relevant warning.
+
+7. Graphs and working files
+===========================
+All names below are relative to `elig-data/`.
+
+BASS:
+  bass_fsr_geometry_oxygen.png
+  bass_fsr_grouped_cv_model_comparison.png
+  bass_fsr_cross_validated_predictions.png
+  bass_fsr_within_experiment_airflow.png
+  The first three are listed by the current BASS results report. The
+  within-experiment airflow image is also present in the folder; verify its
+  provenance/version before relying on it.
+
+SAFFIRE-V:
+  saffire_fsr_by_rib_width.png
+  saffire_fsr_regression_comparison.png
+
+Combined:
+  combine_fsr_grouped_predictions.png
+  combine_fsr_model_predictions.csv
+  combine_fsr_data.csv
+
+Analysis notebooks:
+  bass_data_equations.ipynb
+  saffire_data_equations.ipynb
+  combine_data_equations.ipynb
+
+Source/curated table:
+  astroflame_formatted_cgs.csv
+
+This reference reflects the current files and fitted results. Re-run each
+notebook after changing the source CSV; update this document if the data,
+model selection, or observed ranges change.
