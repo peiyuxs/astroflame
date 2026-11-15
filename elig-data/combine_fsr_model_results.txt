@@ -1,0 +1,12 @@
+Combined BASS / SAFFIRE-V exploratory model
+Rows: 57; experiment groups: 19
+Selected model: Log-linear plus quadratic rib width
+FSR = 1.208128 * exp(-10.33439 + (0.02541979 * airflow_cm_s) + (-1.858148 * thickness_cm) + (3.430389 * rib_width_cm) + (0.2620281 * oxygen_percent) + (-3.227269 * rib_width_squared))
+Equal-experiment grouped CV RMSE: 0.008293264 cm/s
+Held-out Saffire experiment RMSE: 0.02874064 cm/s
+BASS-like envelope: {'airflow_cm_s': (2.0, 21.0), 'thickness_cm': (0.1, 0.5), 'rib_width_cm': (0.0, 0.0), 'oxygen_percent': (17.9, 22.2)}
+SAFFIRE-V-like envelope: {'airflow_cm_s': (5.0, 20.0), 'thickness_cm': (1.0, 1.0), 'rib_width_cm': (0.1, 1.0), 'oxygen_percent': (26.9, 26.9)}
+BASS rib_width_cm=0 denotes N/A, not a physical 0 cm rib measurement.
+Only source-like input combinations are supported; global min/max combinations are not.
+Saffire holdout has no positive rib widths in training, so BASS-only training cannot learn a rib effect.
+The Saffire data are one approximate digitized experiment; the combined model is exploratory and unvalidated for new Saffire burns.
