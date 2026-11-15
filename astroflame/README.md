@@ -1,11 +1,11 @@
-# vinext app
+# Astroflame application
 
-This project was created with create-vinext-app.
+The complete project overview, API reference, and step-by-step setup instructions
+are in the [repository README](../README.md).
 
-## Scripts
+Run the application commands from this folder:
 
-- `pnpm run dev` starts the vinext dev server.
-- `pnpm run build` builds the Cloudflare Worker output.
-- `pnpm run start` previews the built Worker locally.
-- `pnpm run deploy` deploys the Cloudflare Worker.
-
+```bash
+npm install
+npm run dev
+```
