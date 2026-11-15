@@ -48,39 +48,25 @@ export function estimateBassFsrPotential(
   inputs: BassInputs,
   model: BassModel = "airflow",
 ): number {
-  const { thicknessCm, oxygenInitialPct, airflowCmS } = inputs;
-  if (
-    !Number.isFinite(thicknessCm) ||
-    thicknessCm <= 0 ||
-    !Number.isFinite(oxygenInitialPct) ||
-    oxygenInitialPct < 0 ||
-    oxygenInitialPct > 100 ||
-    !Number.isFinite(airflowCmS) ||
-    airflowCmS < 0 ||
-    airflowCmS > 40
-  ) {
-    throw new RangeError(
-      "Potential-model inputs must be finite and within the simulator control ranges.",
-    );
-  }
-
-  return calculateBassFsr(inputs, model);
+  return predictBassFsr(inputs, model);
 }
 
 function calculateBassFsr(inputs: BassInputs, model: BassModel): number {
   const { thicknessCm, oxygenInitialPct, airflowCmS } = inputs;
   if (model === "airflow") {
-    return (
+    return Math.max(
+      0,
       -0.0046401565 +
-      0.00012822354 * thicknessCm ** -1.7904 +
-      0.000020195711 * airflowCmS +
-      0.00034705712 * oxygenInitialPct
+        0.00012822354 * thicknessCm ** -1.7904 +
+        0.000020195711 * airflowCmS +
+        0.00034705712 * oxygenInitialPct,
     );
   }
 
-  return (
+  return Math.max(
+    0,
     -0.0047724994 +
-    0.0001178348 * thicknessCm ** -1.8194 +
-    0.00036659067 * oxygenInitialPct
+      0.0001178348 * thicknessCm ** -1.8194 +
+      0.00036659067 * oxygenInitialPct,
   );
 }
