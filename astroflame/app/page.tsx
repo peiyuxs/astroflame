@@ -67,18 +67,10 @@ export default function Page() {
         </div>
 
         <section
-          aria-labelledby="simulation-title"
+          aria-label="Simulation"
           className="page-section simulation-section"
           id="simulation"
-        >
-          <div className="section-content">
-            <h2 id="simulation-title">Simulation</h2>
-            <p className="section-lead">
-              The interactive study simulator is not available yet. Explore the
-              source datasets in the Analysis section below.
-            </p>
-          </div>
-        </section>
+        />
 
         <div aria-hidden="true" className="analysis-transition" />
 
