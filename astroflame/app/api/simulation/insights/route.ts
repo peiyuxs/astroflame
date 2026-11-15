@@ -16,6 +16,7 @@ const systemInstruction = [
   "Use only the supplied JSON facts. Do not invent NASA findings, citations, physical mechanisms, or measurements.",
   "Do not recalculate or alter the simulator's numeric results. Clearly distinguish model output from experimental measurement.",
   "Offer one general, non-operational idea for future NASA-related research or classroom investigation, plus one neutral research question. Do not prescribe a spacecraft design, material choice, ventilation change, fire response, or safety action.",
+  "Return one to three observations and keep every field concise and within the response schema's length limits.",
   "State the evidence limitations supplied in the JSON. Do not claim that a modeled relationship proves causation.",
   "The output is educational context only, not fire-safety or mission-operational advice.",
 ].join(" ");
@@ -127,11 +128,42 @@ export async function POST(request: Request) {
 
   const insight = parseGeminiResponse(responseBody);
   if (!insight) {
-    console.error("Simulation insights provider returned an invalid response.");
+    console.error("Simulation insights provider returned an invalid response.", {
+      ...getProviderResponseMetadata(responseBody),
+    });
     return Response.json(
       { error: "Gemini returned learning notes in an unexpected format." },
       { status: 502 },
     );
+  }
+
+  function getProviderResponseMetadata(value: unknown) {
+    if (!isRecord(value)) return { candidateCount: 0 };
+    const candidates = Array.isArray(value.candidates) ? value.candidates : [];
+    const candidate = candidates[0];
+    const content =
+      isRecord(candidate) && isRecord(candidate.content)
+        ? candidate.content
+        : null;
+    const finishReason =
+      isRecord(candidate) && typeof candidate.finishReason === "string"
+        ? candidate.finishReason
+        : undefined;
+    const blockReason =
+      isRecord(value.promptFeedback) &&
+      typeof value.promptFeedback.blockReason === "string"
+        ? value.promptFeedback.blockReason
+        : undefined;
+    return {
+      candidateCount: candidates.length,
+      finishReason,
+      blockReason,
+      partCount: content && Array.isArray(content.parts) ? content.parts.length : 0,
+    };
+  }
+
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
   }
 
   return Response.json(

@@ -39,24 +39,35 @@ type ValidationResult =
   | { ok: false; error: string };
 
 const MAX_OUTPUT_LENGTH = {
-  summary: 420,
-  observation: 240,
-  applicationIdea: 260,
-  researchQuestion: 240,
-  limitations: 360,
+  summary: 700,
+  observation: 400,
+  applicationIdea: 520,
+  researchQuestion: 400,
+  limitations: 600,
 } as const;
 
 export const GEMINI_INSIGHT_RESPONSE_SCHEMA = {
   type: "OBJECT",
   properties: {
-    summary: { type: "STRING" },
+    summary: { type: "STRING", maxLength: MAX_OUTPUT_LENGTH.summary },
     observations: {
       type: "ARRAY",
-      items: { type: "STRING" },
+      minItems: 1,
+      maxItems: 3,
+      items: { type: "STRING", maxLength: MAX_OUTPUT_LENGTH.observation },
     },
-    applicationIdea: { type: "STRING" },
-    researchQuestion: { type: "STRING" },
-    limitations: { type: "STRING" },
+    applicationIdea: {
+      type: "STRING",
+      maxLength: MAX_OUTPUT_LENGTH.applicationIdea,
+    },
+    researchQuestion: {
+      type: "STRING",
+      maxLength: MAX_OUTPUT_LENGTH.researchQuestion,
+    },
+    limitations: {
+      type: "STRING",
+      maxLength: MAX_OUTPUT_LENGTH.limitations,
+    },
   },
   required: [
     "summary",
@@ -245,24 +256,30 @@ export function parseSimulationInsight(value: unknown): SimulationInsight | null
 
 export function parseGeminiResponse(value: unknown): SimulationInsight | null {
   if (!isRecord(value) || !Array.isArray(value.candidates)) return null;
-  const candidate = value.candidates[0];
-  if (!isRecord(candidate) || !isRecord(candidate.content)) return null;
-  const parts = candidate.content.parts;
-  if (!Array.isArray(parts)) return null;
+  for (const candidate of value.candidates) {
+    if (!isRecord(candidate) || !isRecord(candidate.content)) continue;
+    const parts = candidate.content.parts;
+    if (!Array.isArray(parts)) continue;
 
-  const text = parts
-    .filter(isRecord)
-    .map((part) => part.text)
-    .filter((part): part is string => typeof part === "string")
-    .join("")
-    .trim();
-  if (!text) return null;
+    const text = parts
+      .filter(isRecord)
+      .filter((part) => part.thought !== true)
+      .map((part) => part.text)
+      .filter((part): part is string => typeof part === "string")
+      .join("")
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "");
+    if (!text) continue;
 
-  try {
-    return parseSimulationInsight(JSON.parse(text));
-  } catch {
-    return null;
+    try {
+      const insight = parseSimulationInsight(JSON.parse(text));
+      if (insight) return insight;
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 function readIgnitionPoint(value: unknown): IgnitionPoint | null {

@@ -100,6 +100,26 @@ test("parses structured Gemini notes and rejects unsafe response shapes", () => 
     parsed?.summary,
     "The model reached the full specimen boundary.",
   );
+  const longerInsight = parseGeminiResponse({
+    candidates: [
+      {
+        content: {
+          parts: [
+            {
+              text: JSON.stringify({
+                summary: "S".repeat(500),
+                observations: ["O".repeat(300)],
+                applicationIdea: "A".repeat(400),
+                researchQuestion: "Q".repeat(300),
+                limitations: "L".repeat(500),
+              }),
+            },
+          ],
+        },
+      },
+    ],
+  });
+  assert.equal(longerInsight?.applicationIdea.length, 400);
   assert.equal(
     parseGeminiResponse({
       candidates: [{ content: { parts: [{ text: "not JSON" }] } }],
