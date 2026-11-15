@@ -260,7 +260,6 @@ export default function FlameSimulator() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenError, setFullscreenError] = useState<string | null>(null);
   const simulatorRef = useRef<HTMLDivElement>(null);
-  const hasAutoCollapsedControls = useRef(false);
   const opposedFsrCmS = estimateOpposedFsrCmS(settings);
   const directionalRates = getDirectionalRates(
     opposedFsrCmS,
@@ -305,26 +304,6 @@ export default function FlameSimulator() {
     document.addEventListener("fullscreenchange", updateFullscreenState);
     return () =>
       document.removeEventListener("fullscreenchange", updateFullscreenState);
-  }, []);
-
-  useEffect(() => {
-    const simulator = simulatorRef.current;
-    if (!simulator || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          entry.intersectionRatio >= 0.5 &&
-          !hasAutoCollapsedControls.current
-        ) {
-          hasAutoCollapsedControls.current = true;
-          setSettingsOpen(false);
-        }
-      },
-      { threshold: [0.5] },
-    );
-    observer.observe(simulator);
-    return () => observer.disconnect();
   }, []);
 
   function updateSetting<Key extends keyof SimulationSettings>(
@@ -393,15 +372,6 @@ export default function FlameSimulator() {
         </div>
         <div className="simulation-actions">
           <button
-            aria-controls="simulation-settings"
-            aria-expanded={settingsOpen}
-            className="simulation-toolbar-button"
-            onClick={() => setSettingsOpen((open) => !open)}
-            type="button"
-          >
-            {settingsOpen ? "Hide controls" : "Test controls"}
-          </button>
-          <button
             className="simulation-run-button"
             disabled={simulation.status === "running"}
             onClick={run}
@@ -465,21 +435,15 @@ export default function FlameSimulator() {
         <aside
           aria-label="Simulation settings"
           className="simulation-settings-panel"
-          aria-hidden={!settingsOpen}
-          inert={!settingsOpen}
           id="simulation-settings"
         >
-          <div className="settings-panel-inner">
+          <div
+            aria-hidden={!settingsOpen}
+            className="settings-panel-inner"
+            inert={!settingsOpen}
+          >
             <div className="settings-panel-heading">
               <h3>Test controls</h3>
-              <button
-                aria-label="Collapse test controls"
-                className="settings-panel-toggle"
-                onClick={() => setSettingsOpen(false)}
-                type="button"
-              >
-                ‹
-              </button>
             </div>
             <div className="settings-panel-content">
             <label className="material-select" htmlFor="simulation-scenario">
@@ -659,45 +623,6 @@ export default function FlameSimulator() {
               </small>
             </label>
 
-            <fieldset className="ignition-controls">
-              <legend>Ignition point</legend>
-              <p>Click a cell on the map or adjust the coordinates.</p>
-              <label htmlFor="ignition-column">
-                Column {ignitionPoint.x + 1}
-                <input
-                  disabled={simulation.status === "running"}
-                  id="ignition-column"
-                  max={GRID_COLUMNS}
-                  min="1"
-                  onChange={(event) =>
-                    chooseIgnitionPoint({
-                      ...ignitionPoint,
-                      x: event.currentTarget.valueAsNumber - 1,
-                    })
-                  }
-                  type="range"
-                  value={ignitionPoint.x + 1}
-                />
-              </label>
-              <label htmlFor="ignition-row">
-                Row {ignitionPoint.y + 1}
-                <input
-                  disabled={simulation.status === "running"}
-                  id="ignition-row"
-                  max={geometry.gridRows}
-                  min="1"
-                  onChange={(event) =>
-                    chooseIgnitionPoint({
-                      ...ignitionPoint,
-                      y: event.currentTarget.valueAsNumber - 1,
-                    })
-                  }
-                  type="range"
-                  value={ignitionPoint.y + 1}
-                />
-              </label>
-            </fieldset>
-
             <div className="reference-conditions">
               <strong>Experiment metadata</strong>
               {settings.scenario === "bass" ? (
@@ -765,19 +690,21 @@ export default function FlameSimulator() {
             </details>
             </div>
           </div>
-        </aside>
-        {!settingsOpen && (
           <button
             aria-controls="simulation-settings"
-            aria-expanded={false}
-            aria-label="Show test controls"
-            className="settings-peek-button"
-            onClick={() => setSettingsOpen(true)}
+            aria-expanded={settingsOpen}
+            aria-label={
+              settingsOpen
+                ? "Collapse simulation sidebar"
+                : "Expand simulation sidebar"
+            }
+            className="settings-panel-toggle"
+            onClick={() => setSettingsOpen((open) => !open)}
             type="button"
           >
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true">{settingsOpen ? "‹" : "›"}</span>
           </button>
-        )}
+        </aside>
 
         <section aria-label="Simulation display" className="simulation-stage">
           <div className="simulation-stage-heading">

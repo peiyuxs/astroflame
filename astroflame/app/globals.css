@@ -1,38 +1,40 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Libre Franklin";
+  src: url("/fonts/LibreFranklin-VariableFont_wght.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   background: #514b4b;
   color: #fff;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Libre Franklin", Arial, Helvetica, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
 }
 
-.settings-panel-toggle {
-  display: grid;
-  width: 30px;
-  height: 28px;
-  place-items: center;
-  border: 0;
-  border-radius: 5px;
-  background: #edf4ef;
-  color: #215c38;
-  font-size: 1.35rem;
-  line-height: 1;
-  cursor: pointer;
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
-.settings-peek-button {
+.settings-panel-toggle {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   top: 50%;
-  left: 24px;
+  right: 0;
   display: grid;
-  width: 40px;
+  width: 24px;
   height: 48px;
   place-items: center;
+  padding: 0;
   border: 1px solid #7d9d86;
   border-left: 0;
   border-radius: 0 12px 12px 0;
@@ -40,11 +42,12 @@
   box-shadow: 2px 2px 8px rgb(0 0 0 / 14%);
   color: #215c38;
   font-size: 1.7rem;
+  line-height: 1;
   cursor: pointer;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
 }
 
-.settings-peek-button:hover {
+.settings-panel-toggle:hover {
   background: #dcece0;
 }
 
@@ -1166,9 +1169,9 @@ a:focus-visible {
 
 .settings-panel-inner {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset: 0 0 0 0;
   display: flex;
-  width: 290px;
+  width: 266px;
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
@@ -1180,7 +1183,7 @@ a:focus-visible {
 }
 
 .with-settings .settings-panel-inner {
-  width: 100%;
+  width: calc(100% - 24px);
   transform: translateX(0);
 }
 
@@ -1578,6 +1581,7 @@ a:focus-visible {
 .simulation-toolbar-button:focus-visible,
 .simulation-actions .simulation-run-button:focus-visible,
 .settings-close-button:focus-visible,
+.settings-panel-toggle:focus-visible,
 .simulation-view-tabs button:focus-visible,
 .fire-map-figure.can-select-ignition .fire-map:focus-visible {
   outline: 2px solid #225fa6;
@@ -1629,16 +1633,17 @@ a:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .simulation-workbench.with-settings .simulation-settings-panel {
+  .simulation-settings-panel {
     position: absolute;
     z-index: 2;
     inset: 0 auto 0 0;
     width: min(340px, calc(100vw - 32px));
     box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+    transform: translateX(calc(-100% + 24px));
+    transition: transform 260ms ease;
   }
 
-  .simulation-workbench.with-settings .settings-panel-inner {
-    width: 100%;
+  .simulation-workbench.with-settings .simulation-settings-panel {
     transform: translateX(0);
   }
 
