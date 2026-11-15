@@ -1,3 +1,6 @@
+import FlameSimulator from "@/app/components/FlameSimulator";
+import SaffireTimeSeries from "@/app/components/SaffireTimeSeries";
+
 const sections = [
   { href: "#about", label: "About" },
   { href: "#simulation", label: "Simulation" },
@@ -67,10 +70,12 @@ export default function Page() {
         </div>
 
         <section
-          aria-label="Simulation"
+          aria-labelledby="simulation-title"
           className="page-section simulation-section"
           id="simulation"
-        />
+        >
+          <FlameSimulator />
+        </section>
 
         <div aria-hidden="true" className="analysis-transition" />
 
@@ -82,9 +87,10 @@ export default function Page() {
           <div className="section-content">
             <h2 id="analysis-title">Analysis</h2>
             <p className="section-lead">
-              Browse the currently available NASA investigation records and
-              measurements as JSON.
+              Explore BASS model estimates and available SAFFIRE-III telemetry.
+              SAFFIRE readings appear here when imported into TigerData.
             </p>
+            <SaffireTimeSeries />
             <p>
               <a className="text-link" href="/api/investigations">
                 Investigation list
