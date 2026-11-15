@@ -9,7 +9,7 @@ const GEMINI_MODEL = "gemini-3.8-flash";
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const MAX_REQUEST_BYTES = 8_000;
-const REQUEST_TIMEOUT_MS = 25_000;
+const REQUEST_TIMEOUT_MS = 60_000;
 
 const systemInstruction = [
   "You write brief, beginner-friendly learning notes about a completed microgravity flame-spread simulation.",
