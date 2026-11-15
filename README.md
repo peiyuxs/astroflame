@@ -1,5 +1,6 @@
 # AstroFlame
 
+![AstroFlame Logo](astroflame/public/astroflame-wordmark.png)
 [AstroFlame](https://astroflame.study) is a NASA Space Apps 2026 project for
 exploring microgravity flame spread over PMMA fuel surfaces. The site includes
 an interactive simulator, a measured-versus-predicted BASS comparison, and
