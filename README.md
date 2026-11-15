@@ -1,5 +1,7 @@
 # AstroFlame
 
+https://astroflame.study/
+
 AstroFlame is a NASA Space Apps 2026 project. It includes an evidence-bounded
 microgravity flame-spread simulator and read-only API endpoints for selected
 NASA Physical Sciences Informatics (PSI) data. Imported PSI data is stored in
