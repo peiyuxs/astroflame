@@ -4,7 +4,7 @@ import {
   predictBassFsr,
 } from "./bass-model.ts";
 
-export type ScenarioId = "bass" | "saffire-5";
+export type ScenarioId = "bass" | "saffire-v";
 
 export type SimulationSettings = {
   scenario: ScenarioId;
@@ -38,7 +38,7 @@ export const SCENARIO_GEOMETRY: Record<ScenarioId, SpecimenGeometry> = {
     widthOptionsCm: [1.2, 2.2],
     gridRows: 22,
   },
-  "saffire-5": {
+  "saffire-v": {
     lengthCm: 40,
     widthCm: 20,
     thicknessCm: 1,
@@ -124,14 +124,14 @@ export function getScenarioGeometry(
     thicknessCm:
       settings.scenario === "bass"
         ? settings.thicknessCm
-        : SCENARIO_GEOMETRY["saffire-5"].thicknessCm,
+        : SCENARIO_GEOMETRY["saffire-v"].thicknessCm,
   };
 }
 
 export function getSaffireRibWidthRange(airflowCmS: number) {
   const data = SAFFIRE_FSR_DATA[airflowCmS];
   if (!data) {
-    throw new RangeError("SAFFIRE-5 airflow must be 5 or 20 cm/s.");
+    throw new RangeError("SAFFIRE-V airflow must be 5 or 20 cm/s.");
   }
   return { min: data[0][0], max: data[data.length - 1][0], step: 0.1 };
 }
@@ -151,7 +151,7 @@ export function estimateOpposedFsrCmS(settings: SimulationSettings): number {
 
   const data = SAFFIRE_FSR_DATA[settings.airflowCmS];
   if (!data) {
-    throw new RangeError("SAFFIRE-5 airflow must be 5 or 20 cm/s.");
+    throw new RangeError("SAFFIRE-V airflow must be 5 or 20 cm/s.");
   }
   return interpolateTable(data, settings.ribWidthCm);
 }
@@ -386,7 +386,7 @@ function assertSettingsWithinBounds(settings: SimulationSettings) {
     settings.thicknessCm !== 1
   ) {
     throw new RangeError(
-      "SAFFIRE-5 inputs must match its observed oxygen, thickness, airflow, and rib-width ranges.",
+      "SAFFIRE-V inputs must match its observed oxygen, thickness, airflow, and rib-width ranges.",
     );
   }
 }

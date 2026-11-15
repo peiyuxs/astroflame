@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BASS_INPUT_RANGES } from "@/lib/bass-model";
+import SimulationInsights from "@/app/components/SimulationInsights";
 import {
   advanceSimulation,
   CONCURRENT_MULTIPLIER_RANGE,
@@ -24,6 +25,10 @@ import {
   startSimulation,
   VISUALIZATION_ACCELERATION,
 } from "@/lib/flame-simulation";
+import {
+  parseSimulationInsight,
+  type SimulationInsight,
+} from "@/lib/simulation-insights";
 
 const CELL_PIXELS = 10;
 
@@ -256,11 +261,15 @@ export default function FlameSimulator() {
   const [simulation, setSimulation] = useState(() =>
     createInitialSimulation(settings),
   );
+  const [insightStatus, setInsightStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const [insight, setInsight] = useState<SimulationInsight | null>(null);
+  const [insightError, setInsightError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenError, setFullscreenError] = useState<string | null>(null);
   const simulatorRef = useRef<HTMLDivElement>(null);
-  const hasAutoCollapsedControls = useRef(false);
   const opposedFsrCmS = estimateOpposedFsrCmS(settings);
   const directionalRates = getDirectionalRates(
     opposedFsrCmS,
@@ -282,7 +291,7 @@ export default function FlameSimulator() {
     simulation.history.at(-1)?.areaGrowthCm2S ?? 0;
   const averageGrowth = getAverageAreaGrowthCm2S(simulation);
   const ribWidthRange =
-    settings.scenario === "saffire-5"
+    settings.scenario === "saffire-v"
       ? getSaffireRibWidthRange(settings.airflowCmS)
       : null;
 
@@ -299,6 +308,83 @@ export default function FlameSimulator() {
   }, [settings, simulation.status, simulation.timeStepSeconds]);
 
   useEffect(() => {
+    if (
+      simulation.status !== "burned" &&
+      simulation.status !== "extinguished"
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setInsightStatus("loading");
+    setInsight(null);
+    setInsightError(null);
+
+    async function generateInsights() {
+      try {
+        const response = await fetch("/api/simulation/insights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            settings,
+            ignitionPoint,
+            result: {
+              status: simulation.status,
+              modelTimeSeconds: simulation.simulatedSeconds,
+              burnedAreaCm2,
+              instantaneousGrowthCm2S: instantaneousGrowth,
+              averageGrowthCm2S: averageGrowth,
+            },
+          }),
+          signal: controller.signal,
+        });
+
+        let payload: unknown;
+        try {
+          payload = await response.json();
+        } catch {
+          throw new Error("Gemini returned an unreadable response.");
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            getInsightsApiError(payload) ??
+              `Gemini learning notes could not be generated (${response.status}).`,
+          );
+        }
+
+        const parsedInsight =
+          isRecord(payload) ? parseSimulationInsight(payload.insight) : null;
+        if (!parsedInsight) {
+          throw new Error("Gemini returned notes in an unexpected format.");
+        }
+
+        setInsight(parsedInsight);
+        setInsightStatus("ready");
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setInsightError(
+          error instanceof Error
+            ? error.message
+            : "Gemini learning notes could not be generated.",
+        );
+        setInsightStatus("error");
+      }
+    }
+
+    void generateInsights();
+    return () => controller.abort();
+  }, [
+    averageGrowth,
+    burnedAreaCm2,
+    ignitionPoint,
+    instantaneousGrowth,
+    settings,
+    simulation.simulatedSeconds,
+    simulation.status,
+  ]);
+
+  useEffect(() => {
     function updateFullscreenState() {
       setIsFullscreen(document.fullscreenElement === simulatorRef.current);
     }
@@ -307,35 +393,17 @@ export default function FlameSimulator() {
       document.removeEventListener("fullscreenchange", updateFullscreenState);
   }, []);
 
-  useEffect(() => {
-    const simulator = simulatorRef.current;
-    if (!simulator || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          entry.intersectionRatio >= 0.5 &&
-          !hasAutoCollapsedControls.current
-        ) {
-          hasAutoCollapsedControls.current = true;
-          setSettingsOpen(false);
-        }
-      },
-      { threshold: [0.5] },
-    );
-    observer.observe(simulator);
-    return () => observer.disconnect();
-  }, []);
-
   function updateSetting<Key extends keyof SimulationSettings>(
     key: Key,
     value: SimulationSettings[Key],
   ) {
+    clearSimulationInsights();
     setSettings((current) => ({ ...current, [key]: value }));
     setSimulation(createInitialSimulation(settings));
   }
 
   function changeScenario(scenario: ScenarioId) {
+    clearSimulationInsights();
     const scenarioSettings = {
       ...settings,
       scenario,
@@ -350,11 +418,19 @@ export default function FlameSimulator() {
   }
 
   function run() {
+    clearSimulationInsights();
     setSimulation(startSimulation(settings, ignitionPoint));
   }
 
   function reset() {
+    clearSimulationInsights();
     setSimulation(createInitialSimulation(settings));
+  }
+
+  function clearSimulationInsights() {
+    setInsightStatus("idle");
+    setInsight(null);
+    setInsightError(null);
   }
 
   function chooseIgnitionPoint(point: IgnitionPoint) {
@@ -392,15 +468,6 @@ export default function FlameSimulator() {
           <h2 id="simulation-title">Microgravity flame spread simulator</h2>
         </div>
         <div className="simulation-actions">
-          <button
-            aria-controls="simulation-settings"
-            aria-expanded={settingsOpen}
-            className="simulation-toolbar-button"
-            onClick={() => setSettingsOpen((open) => !open)}
-            type="button"
-          >
-            {settingsOpen ? "Hide controls" : "Test controls"}
-          </button>
           <button
             className="simulation-run-button"
             disabled={simulation.status === "running"}
@@ -465,21 +532,15 @@ export default function FlameSimulator() {
         <aside
           aria-label="Simulation settings"
           className="simulation-settings-panel"
-          aria-hidden={!settingsOpen}
-          inert={!settingsOpen}
           id="simulation-settings"
         >
-          <div className="settings-panel-inner">
+          <div
+            aria-hidden={!settingsOpen}
+            className="settings-panel-inner"
+            inert={!settingsOpen}
+          >
             <div className="settings-panel-heading">
               <h3>Test controls</h3>
-              <button
-                aria-label="Collapse test controls"
-                className="settings-panel-toggle"
-                onClick={() => setSettingsOpen(false)}
-                type="button"
-              >
-                ‹
-              </button>
             </div>
             <div className="settings-panel-content">
             <label className="material-select" htmlFor="simulation-scenario">
@@ -489,15 +550,15 @@ export default function FlameSimulator() {
                 id="simulation-scenario"
                 onChange={(event) =>
                   changeScenario(
-                    event.currentTarget.value === "saffire-5"
-                      ? "saffire-5"
+                    event.currentTarget.value === "saffire-v"
+                      ? "saffire-v"
                       : "bass",
                   )
                 }
                 value={settings.scenario}
               >
                 <option value="bass">BASS — smooth PMMA</option>
-                <option value="saffire-5">SAFFIRE-5 — ribbed PMMA</option>
+                <option value="saffire-v">SAFFIRE-V — ribbed PMMA</option>
               </select>
             </label>
 
@@ -612,7 +673,7 @@ export default function FlameSimulator() {
                   </span>
                 </label>
                 <div className="material-evidence">
-                  <strong>3 cm rib height · 1 cm base thickness</strong>
+                  <strong>0.3 cm rib height · 1 cm base thickness</strong>
                   <span>40 × 20 cm specimen · 800 cm² planform</span>
                   <span>26.9% oxygen · 76.1 kPa reported pressure</span>
                   <span>
@@ -659,45 +720,6 @@ export default function FlameSimulator() {
               </small>
             </label>
 
-            <fieldset className="ignition-controls">
-              <legend>Ignition point</legend>
-              <p>Click a cell on the map or adjust the coordinates.</p>
-              <label htmlFor="ignition-column">
-                Column {ignitionPoint.x + 1}
-                <input
-                  disabled={simulation.status === "running"}
-                  id="ignition-column"
-                  max={GRID_COLUMNS}
-                  min="1"
-                  onChange={(event) =>
-                    chooseIgnitionPoint({
-                      ...ignitionPoint,
-                      x: event.currentTarget.valueAsNumber - 1,
-                    })
-                  }
-                  type="range"
-                  value={ignitionPoint.x + 1}
-                />
-              </label>
-              <label htmlFor="ignition-row">
-                Row {ignitionPoint.y + 1}
-                <input
-                  disabled={simulation.status === "running"}
-                  id="ignition-row"
-                  max={geometry.gridRows}
-                  min="1"
-                  onChange={(event) =>
-                    chooseIgnitionPoint({
-                      ...ignitionPoint,
-                      y: event.currentTarget.valueAsNumber - 1,
-                    })
-                  }
-                  type="range"
-                  value={ignitionPoint.y + 1}
-                />
-              </label>
-            </fieldset>
-
             <div className="reference-conditions">
               <strong>Experiment metadata</strong>
               {settings.scenario === "bass" ? (
@@ -719,7 +741,7 @@ export default function FlameSimulator() {
                 <>
                   <span>Material / flow: structured ribbed PMMA / opposed flow</span>
                   <span>Surface geometry: 40 × 20 cm · thickness 1 cm</span>
-                  <span>Rib height 3 cm · width {settings.ribWidthCm.toFixed(1)} cm</span>
+                  <span>Rib height 0.3 cm · width {settings.ribWidthCm.toFixed(1)} cm</span>
                   <span>Pressure 76.1 kPa · oxygen 26.9%</span>
                   <span>Planform: 800 cm² · airflow {settings.airflowCmS} cm/s</span>
                 </>
@@ -737,7 +759,7 @@ export default function FlameSimulator() {
               </p>
               <p>
                 BASS airflow and thickness slider bounds are 2–21 cm/s and
-                0.1–0.5 cm; oxygen is 17.9–22.2%. SAFFIRE-5 uses only 5 or
+                0.1–0.5 cm; oxygen is 17.9–22.2%. SAFFIRE-V uses only 5 or
                 20 cm/s, 0.1–1.0 cm ribs where observed, fixed 1 cm thickness,
                 and fixed 26.9% oxygen. Its digitized observations represent
                 one experiment and are not independent validation.
@@ -765,19 +787,21 @@ export default function FlameSimulator() {
             </details>
             </div>
           </div>
-        </aside>
-        {!settingsOpen && (
           <button
             aria-controls="simulation-settings"
-            aria-expanded={false}
-            aria-label="Show test controls"
-            className="settings-peek-button"
-            onClick={() => setSettingsOpen(true)}
+            aria-expanded={settingsOpen}
+            aria-label={
+              settingsOpen
+                ? "Collapse simulation sidebar"
+                : "Expand simulation sidebar"
+            }
+            className="settings-panel-toggle"
+            onClick={() => setSettingsOpen((open) => !open)}
             type="button"
           >
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true">{settingsOpen ? "‹" : "›"}</span>
           </button>
-        )}
+        </aside>
 
         <section aria-label="Simulation display" className="simulation-stage">
           <div className="simulation-stage-heading">
@@ -829,7 +853,12 @@ export default function FlameSimulator() {
             <div className="map-view">
               <div className="map-title-row">
                 <h3>Fuel surface · {geometry.lengthCm} × {geometry.widthCm} cm</h3>
-                <p>Airflow → right; opposed spread ← left</p>
+                <p className="directional-spread-label">
+                  <strong className="airflow-direction">Airflow →</strong>
+                  <span className="flame-spread-direction">
+                    Flame Spread ←
+                  </span>
+                </p>
               </div>
               <FireMap
                 cells={simulation.cells}
@@ -838,11 +867,6 @@ export default function FlameSimulator() {
                 onSelectIgnition={chooseIgnitionPoint}
                 selectable={simulation.status !== "running"}
               />
-              <div className="fire-legend" aria-label="Flame map legend">
-                <span><i className="legend-burned" /> Burned</span>
-                <span><i className="legend-unburned" /> Unburned</span>
-                <span><i className="legend-burning" /> Active front</span>
-              </div>
             </div>
             <div className="chart-view">
               <div className="map-title-row">
@@ -858,12 +882,27 @@ export default function FlameSimulator() {
               )}
             </div>
           </div>
-          <p className="simulation-acceleration-note">
-            Animation runs at {VISUALIZATION_ACCELERATION}×; all reported times
-            and growth rates use simulated seconds.
-          </p>
+          <SimulationInsights
+            error={insightError}
+            insight={insight}
+            status={insightStatus}
+          />
         </section>
       </div>
     </div>
   );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getInsightsApiError(value: unknown): string | null {
+  if (
+    isRecord(value) &&
+    typeof value.error === "string"
+  ) {
+    return value.error;
+  }
+  return null;
 }

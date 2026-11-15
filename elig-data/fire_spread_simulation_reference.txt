@@ -61,7 +61,7 @@ BASS-II PSI-25
     oxygen is not segment oxygen. Final oxygen may not represent a relit
     segment.
 
-SAFFIRE-V (SAFFIRE-5)
+SAFFIRE-V
 --------------------
   Observations: 18
   Experiment IDs: 1

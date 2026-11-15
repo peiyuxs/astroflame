@@ -55,10 +55,10 @@ test("directional interpolation matches opposed, lateral, and concurrent endpoin
   });
 });
 
-test("SAFFIRE-5 uses airflow-specific rib observations and bounded interpolation", () => {
+test("SAFFIRE-V uses airflow-specific rib observations and bounded interpolation", () => {
   const saffire = {
     ...bassSettings,
-    scenario: "saffire-5",
+    scenario: "saffire-v",
     oxygenPct: 26.9,
     airflowCmS: 20,
     thicknessCm: 1,
