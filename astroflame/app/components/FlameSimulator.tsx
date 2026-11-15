@@ -182,10 +182,6 @@ function SpreadTimeChart({ points }: { points: SpreadPoint[] }) {
   );
 }
 
-function getBurnedCount(cells: FlameCell[]) {
-  return cells.filter((cell) => cell.state === "burned").length;
-}
-
 function getStatusLabel(simulation: FlameSimulationState) {
   switch (simulation.status) {
     case "running":
@@ -219,9 +215,6 @@ export default function FlameSimulator() {
     MATERIAL_PRESETS.find((material) => material.id === settings.materialId) ??
     MATERIAL_PRESETS[0];
   const predictedFsrCmS = estimateMaterialFsrCmS(settings);
-  const burnedCount = getBurnedCount(simulation.cells);
-  const progressPct =
-    (burnedCount / (GRID_COLUMNS * GRID_ROWS)) * 100;
   const outsideValidatedRange =
     settings.oxygenPct < BASS_INPUT_RANGES.oxygenInitialPct.min ||
     settings.oxygenPct > BASS_INPUT_RANGES.oxygenInitialPct.max ||
@@ -230,18 +223,6 @@ export default function FlameSimulator() {
   const assumedMultiplier = ASSUMED_SPREAD_MULTIPLIERS[settings.materialId];
   const extinctionCutoff =
     EXTINCTION_OXYGEN_CUTOFFS_PCT[settings.materialId] ?? 0;
-  const farthestMapDistanceCm =
-    Math.max(
-      Math.hypot(ignitionPoint.x, ignitionPoint.y),
-      Math.hypot(GRID_COLUMNS - 1 - ignitionPoint.x, ignitionPoint.y),
-      Math.hypot(ignitionPoint.x, GRID_ROWS - 1 - ignitionPoint.y),
-      Math.hypot(
-        GRID_COLUMNS - 1 - ignitionPoint.x,
-        GRID_ROWS - 1 - ignitionPoint.y,
-      ),
-    ) * CELL_SIZE_CM;
-  const estimatedModelTime =
-    predictedFsrCmS > 0 ? farthestMapDistanceCm / predictedFsrCmS : null;
 
   useEffect(() => {
     if (simulation.status !== "running") {
@@ -347,7 +328,6 @@ export default function FlameSimulator() {
     >
       <header className="simulation-dashboard-header">
         <div className="simulation-heading">
-          <p className="eyebrow">Microgravity · flame spread</p>
           <h2 id="simulation-title">Flame simulator</h2>
         </div>
         <div className="simulation-actions">
@@ -504,45 +484,6 @@ export default function FlameSimulator() {
                 </span>
               </label>
 
-              <fieldset className="ignition-controls">
-                <legend>Ignition point</legend>
-                <p>Click the map or adjust the coordinates.</p>
-                <label htmlFor="ignition-column">
-                  Column <output>{ignitionPoint.x + 1}</output>
-                  <input
-                    disabled={simulation.status === "running"}
-                    id="ignition-column"
-                    max={GRID_COLUMNS}
-                    min="1"
-                    onChange={(event) =>
-                      chooseIgnitionPoint({
-                        ...ignitionPoint,
-                        x: event.currentTarget.valueAsNumber - 1,
-                      })
-                    }
-                    type="range"
-                    value={ignitionPoint.x + 1}
-                  />
-                </label>
-                <label htmlFor="ignition-row">
-                  Row <output>{ignitionPoint.y + 1}</output>
-                  <input
-                    disabled={simulation.status === "running"}
-                    id="ignition-row"
-                    max={GRID_ROWS}
-                    min="1"
-                    onChange={(event) =>
-                      chooseIgnitionPoint({
-                        ...ignitionPoint,
-                        y: event.currentTarget.valueAsNumber - 1,
-                      })
-                    }
-                    type="range"
-                    value={ignitionPoint.y + 1}
-                  />
-                </label>
-              </fieldset>
-
               <div className="reference-conditions">
                 <span>Reference thickness</span>
                 <strong>{BASS_REFERENCE_THICKNESS_CM.toFixed(2)} cm</strong>
@@ -632,11 +573,6 @@ export default function FlameSimulator() {
             >
               Spread vs. time
             </button>
-            {estimatedModelTime !== null && (
-              <span className="estimated-duration">
-                Approx. far-edge time {estimatedModelTime.toFixed(0)} s
-              </span>
-            )}
           </div>
 
           <div
@@ -661,27 +597,6 @@ export default function FlameSimulator() {
                   onSelectIgnition={chooseIgnitionPoint}
                   selectable={simulation.status !== "running"}
                 />
-                <div className="map-footer">
-                  <div aria-label="Flame map legend" className="fire-legend">
-                    <span><i className="legend-burned" /> Burned</span>
-                    <span><i className="legend-unburned" /> Unburned</span>
-                    <span><i className="legend-burning" /> Burning</span>
-                    <span><i className="legend-vulnerable" /> Vulnerable</span>
-                  </div>
-                  <div className="progress-summary">
-                    <div
-                      aria-label={`Burned area ${Math.round(progressPct)} percent`}
-                      className="burn-progress"
-                      role="progressbar"
-                      aria-valuemax={100}
-                      aria-valuemin={0}
-                      aria-valuenow={Math.round(progressPct)}
-                    >
-                      <span style={{ width: `${progressPct}%` }} />
-                    </div>
-                    <span>{Math.round(progressPct)}% burned</span>
-                  </div>
-                </div>
               </div>
             ) : (
               <div className="chart-view">
