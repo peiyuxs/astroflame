@@ -446,6 +446,110 @@ a:focus-visible {
   margin: 0 auto;
 }
 
+.research-report {
+  display: grid;
+  gap: 24px;
+  margin: 56px auto 0;
+  color: #161616;
+}
+
+.research-report-page {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 48px);
+  background: #fff;
+  line-height: 1.45;
+}
+
+.research-report-page h2,
+.research-report-page h3 {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.research-report-page h4 {
+  margin: 18px 0 4px;
+  font-size: 1rem;
+}
+
+.research-report-page p {
+  margin: 12px 0;
+}
+
+.research-report-page ul,
+.research-report-page ol {
+  margin: 4px 0 14px;
+  padding-left: 32px;
+}
+
+.research-report-page ul {
+  padding-left: 24px;
+  list-style: none;
+}
+
+.research-report-page ul > li::before {
+  display: inline-block;
+  width: 24px;
+  margin-left: -24px;
+  content: "-";
+}
+
+.research-report-page li {
+  margin: 0;
+  padding-left: 2px;
+}
+
+.research-report-page figure {
+  margin: 18px 0;
+}
+
+.research-report-page figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.research-equation {
+  overflow-wrap: anywhere;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.9rem, 2.3vw, 1.25rem);
+  font-style: italic;
+}
+
+.research-definitions {
+  list-style: none;
+  padding-left: 0 !important;
+}
+
+.research-definitions > li::before {
+  content: none !important;
+}
+
+.research-table-wrap {
+  overflow-x: auto;
+  margin: 12px 0 18px;
+}
+
+.research-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.research-table th,
+.research-table td {
+  padding: 4px 8px;
+  border: 1px solid #d5d5d5;
+  text-align: center;
+}
+
+.research-table thead th {
+  font-weight: 700;
+}
+
 .bass-analysis-heading {
   display: flex;
   flex-wrap: wrap;
@@ -677,6 +781,52 @@ a:focus-visible {
   font-weight: 400;
   letter-spacing: -0.055em;
   line-height: 1.05;
+}
+
+.documentation-report {
+  margin-top: 40px;
+  padding: clamp(24px, 5vw, 48px);
+  background: #fff;
+  color: #161616;
+  line-height: 1.45;
+}
+
+.documentation-report h2 {
+  margin: 0 0 20px;
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.documentation-report h3 {
+  margin: 22px 0 8px;
+  font-size: 1.2rem;
+}
+
+.documentation-report h4 {
+  margin: 16px 0 4px;
+}
+
+.documentation-report ul {
+  margin: 4px 0 14px;
+  padding-left: 24px;
+  list-style: none;
+}
+
+.documentation-report ul > li::before {
+  display: inline-block;
+  width: 24px;
+  margin-left: -24px;
+  content: "-";
+}
+
+.documentation-report li {
+  overflow-wrap: anywhere;
+}
+
+.documentation-report a {
+  color: #0645ad;
 }
 
 .site-footer {

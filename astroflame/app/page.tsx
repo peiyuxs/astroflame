@@ -1,5 +1,6 @@
 import FlameSimulator from "@/app/components/FlameSimulator";
 import BassComparison from "@/app/components/BassComparison";
+import BassReport from "@/app/components/BassReport";
 
 function HeroSky() {
   let seed = 2026;
@@ -159,6 +160,7 @@ export default function Page() {
           id="analysis"
         >
           <BassComparison />
+          <BassReport />
         </section>
     </main>
   );
