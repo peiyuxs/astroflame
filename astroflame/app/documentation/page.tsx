@@ -12,59 +12,9 @@ export default function DocumentationPage() {
         aria-labelledby="documentation-title"
         className="page-section documentation-section"
       >
-        <div className="section-content">
-          <h1 id="documentation-title">Documentation</h1>
-          <h2>References</h2>
-          <ul>
-            <li>
-              NASA Physical Sciences Informatics.{" "}
-              <a
-                href="https://psi.nasa.gov/physci/repo/data/investigations/PSI-26"
-                rel="noreferrer"
-                target="_blank"
-              >
-                PSI-26: Burning and Suppression of Solids (BASS)
-              </a>
-              .
-            </li>
-            <li>
-              NASA TechPort.{" "}
-              <a
-                href="https://techport.nasa.gov/projects/13543"
-                rel="noreferrer"
-                target="_blank"
-              >
-                SAFFIRE-V: Spacecraft Fire Safety Demonstration (Saffire)
-              </a>
-              .
-            </li>
-            <li>
-              Olson &amp; Ferkul.{" "}
-              <a
-                href="https://ntrs.nasa.gov/api/citations/20140011099/downloads/20140011099.pdf"
-                rel="noreferrer"
-                target="_blank"
-              >
-                NASA Glenn Research Center BASS-II / POIWG
-              </a>
-              .
-            </li>
-            <li>
-              <a
-                href="https://www.researchgate.net/publication/255013038_Microgravity_Flame_Spread_in_Exploration_Atmospheres_Pressure_Oxygen_and_Velocity_Effects_on_Opposed_and_Concurrent_Flame_Spread"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Microgravity Flame Spread in Exploration Atmospheres: Pressure,
-                Oxygen, and Velocity Effects on Opposed and Concurrent Flame
-                Spread
-              </a>
-              .
-            </li>
-          </ul>
-          <div className="documentation-report">
-            <h2>Documentation</h2>
-            <h3>System Architecture</h3>
+        <div className="section-content flex flex-auto flex-row items-start justify-center gap-20">
+          <div className="documentation-report flex flex-auto flex-col w-1/2 pb-10">
+            <h2>System Architecture</h2>
             <p>
               AstroFlame was implemented as a modern web application using:
             </p>
@@ -98,6 +48,8 @@ export default function DocumentationPage() {
               <li>DeepSeek</li>
               <li>Chat-GPT</li>
             </ul>
+          </div>
+          <div className="documentation-report flex flex-auto flex-col w-1/2 pb-10">
             <h2>References</h2>
             <ul>
               <li>
@@ -160,6 +112,6 @@ export default function DocumentationPage() {
           </div>
         </div>
       </section>
-    </main>
+    </main >
   );
 }

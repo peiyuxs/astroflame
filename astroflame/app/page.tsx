@@ -156,7 +156,7 @@ export default function Page() {
 
         <section
           aria-label="Analysis"
-          className="page-section analysis-section"
+          className="page-section analysis-section flex flex-auto flex-col items-center justify-center gap-8 py-16"
           id="analysis"
         >
           <BassComparison />

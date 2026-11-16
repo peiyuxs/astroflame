@@ -74,7 +74,9 @@ export default function BassComparison() {
     <section aria-labelledby="bass-analysis-title" className="bass-analysis">
       <div className="bass-analysis-heading">
         <div>
-          <h2 id="bass-analysis-title">BASS spread-rate comparison</h2>
+          <h2 id="bass-analysis-title"><b>Analysis</b>
+            <br></br>
+            BASS spread-rate comparison</h2>
           <p>
             Compare NASA-reported spread rates with predictions.
           </p>
